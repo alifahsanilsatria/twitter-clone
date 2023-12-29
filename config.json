@@ -7,11 +7,18 @@
     "timeout":2
   },
   "database": {
-      "host": "localhost",
-      "port": "3306",
-      "user": "user",
-      "pass": "password",
-      "name": "article"
+      "sql" : {
+        "host": "localhost",
+        "port": "3306",
+        "user": "twitter-clone",
+        "pass": "twitter-clone-123",
+        "name": "twitter"
+      },
+      "redis" : {
+        "host": "localhost",
+        "port": "6379",
+        "password": "twitter-clone-123",
+        "fds": "0"
+      }
   }
-
 }
