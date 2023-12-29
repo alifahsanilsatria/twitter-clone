@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -17,7 +18,7 @@ func (handler *userHandler) SignUp(c echo.Context) error {
 		"method": "userHandler.SignUp",
 	}
 	var reqPayload domain.SignUpParam
-	errParsingReqPayload := c.Bind(&reqPayload)
+	errParsingReqPayload := json.NewDecoder(c.Request().Body).Decode(&reqPayload)
 	if errParsingReqPayload != nil {
 		logData["error_parsing_request_payload"] = errParsingReqPayload.Error()
 		handler.logger.
@@ -30,7 +31,7 @@ func (handler *userHandler) SignUp(c echo.Context) error {
 	logData["request_payload"] = fmt.Sprintf("%+v", reqPayload)
 
 	errvalidateSignUpParam := validateSignUpParam(reqPayload)
-	if errParsingReqPayload != nil {
+	if errvalidateSignUpParam != nil {
 		logData["error_validate_sign_up_param"] = errvalidateSignUpParam.Error()
 		handler.logger.
 			WithFields(logData).

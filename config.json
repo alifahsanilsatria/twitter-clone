@@ -9,15 +9,15 @@
   "database": {
       "sql" : {
         "host": "localhost",
-        "port": "3306",
-        "user": "twitter-clone",
-        "pass": "twitter-clone-123",
+        "port": "5432",
+        "user": "twitter_clone",
+        "pass": "twitterclone123",
         "name": "twitter"
       },
       "redis" : {
-        "host": "localhost",
+        "host": "127.0.0.1",
         "port": "6379",
-        "password": "twitter-clone-123",
+        "password": "twitterclone123",
         "fds": "0"
       }
   }

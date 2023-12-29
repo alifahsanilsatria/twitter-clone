@@ -16,10 +16,12 @@ func (repo *userRepository) CreateNewUserAccount(ctx context.Context, param doma
 	}
 
 	query := `
-		insert into user
+		insert into users
 		(username, password, email, complete_name, is_deleted, created_at)
 		values
-		($1, $2, $3, $4, $5, $6, $7)
+		($1, $2, $3, $4, $5, $6)
+		returning
+		id
 	`
 
 	args := []interface{}{
@@ -31,7 +33,7 @@ func (repo *userRepository) CreateNewUserAccount(ctx context.Context, param doma
 		time.Now(),
 	}
 
-	execContextResp, errQuery := repo.db.ExecContext(ctx, query, args...)
+	_, errQuery := repo.db.ExecContext(ctx, query, args...)
 	if errQuery != nil {
 		logData["error_query"] = errQuery.Error()
 		repo.logger.
@@ -41,19 +43,5 @@ func (repo *userRepository) CreateNewUserAccount(ctx context.Context, param doma
 		return domain.CreateNewUserAccountResult{}, errQuery
 	}
 
-	idResult, errIdResult := execContextResp.LastInsertId()
-	if errIdResult != nil {
-		logData["error_id_result"] = errIdResult.Error()
-		repo.logger.
-			WithFields(logData).
-			WithError(errQuery).
-			Errorln("error on insert query")
-		return domain.CreateNewUserAccountResult{}, errQuery
-	}
-
-	response := domain.CreateNewUserAccountResult{
-		Id: idResult,
-	}
-
-	return response, nil
+	return domain.CreateNewUserAccountResult{}, nil
 }

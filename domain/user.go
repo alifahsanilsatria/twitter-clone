@@ -24,9 +24,17 @@ type SignInResult struct {
 	Token string `json:"token"`
 }
 
+type SignOutParam struct {
+	Token string
+}
+
+type SignOutResult struct {
+}
+
 type UserUsecase interface {
 	SignUp(ctx context.Context, param SignUpParam) (SignUpResult, error)
 	SignIn(ctx context.Context, param SignInParam) (SignInResult, error)
+	SignOut(ctx context.Context, param SignOutParam) (SignOutResult, error)
 }
 
 type GetUserByUsernameOrEmailParam struct {
