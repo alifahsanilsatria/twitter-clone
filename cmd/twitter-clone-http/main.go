@@ -8,14 +8,16 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 	"github.com/spf13/viper"
 
 	userHandler "github.com/alifahsanilsatria/twitter-clone/user/delivery/http"
 	userMiddleware "github.com/alifahsanilsatria/twitter-clone/user/delivery/http/middleware"
-	userRepository "github.com/alifahsanilsatria/twitter-clone/user/repository/db"
+	userDBRepository "github.com/alifahsanilsatria/twitter-clone/user/repository/db"
 	userUsecase "github.com/alifahsanilsatria/twitter-clone/user/usecase"
+	userSessionRedisRepository "github.com/alifahsanilsatria/twitter-clone/user_session/repository/redis"
 	"github.com/sirupsen/logrus"
 )
 
@@ -41,40 +43,33 @@ func main() {
 	// Can be any io.Writer, see below for File example
 	logrus.SetOutput(os.Stdout)
 
-	dbHost := viper.GetString(`database.host`)
-	dbPort := viper.GetString(`database.port`)
-	dbUser := viper.GetString(`database.user`)
-	dbPass := viper.GetString(`database.pass`)
-	dbName := viper.GetString(`database.name`)
-	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
-	val := url.Values{}
-	val.Add("parseTime", "1")
-	val.Add("loc", "Asia/Jakarta")
-	dsn := fmt.Sprintf("%s?%s", connection, val.Encode())
-	dbConn, err := sql.Open(`mysql`, dsn)
-
+	sqlConn, err := createSQLConnectionInstance()
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = dbConn.Ping()
+	err = sqlConn.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	defer func() {
-		err := dbConn.Close()
+		err := sqlConn.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
 	}()
+
+	redisConn := createRedisConnectionInstance()
 
 	e := echo.New()
 
 	userMiddleWare := userMiddleware.InitMiddleware()
 	e.Use(userMiddleWare.CORS)
 
-	userRepository := userRepository.NewUserRepository(dbConn, logger)
-	userUsecase := userUsecase.NewUserUsecase(userRepository, logger)
+	userRepository := userDBRepository.NewUserRepository(sqlConn, logger)
+	userSessionRepository := userSessionRedisRepository.NewUserSessionRepository(redisConn, logger)
+
+	userUsecase := userUsecase.NewUserUsecase(userRepository, userSessionRepository, logger)
 	userHandler.NewUserHandler(e, userUsecase, logger)
 
 	serverListener := http.Server{
@@ -87,4 +82,35 @@ func main() {
 	}
 
 	return
+}
+
+func createSQLConnectionInstance() (*sql.DB, error) {
+	dbHost := viper.GetString(`database.sql.host`)
+	dbPort := viper.GetString(`database.sql.port`)
+	dbUser := viper.GetString(`database.sql.user`)
+	dbPass := viper.GetString(`database.sql.pass`)
+	dbName := viper.GetString(`database.sql.name`)
+	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
+	val := url.Values{}
+	val.Add("parseTime", "1")
+	val.Add("loc", "Asia/Jakarta")
+	dsn := fmt.Sprintf("%s?%s", connection, val.Encode())
+	dbConn, err := sql.Open(`postgresql`, dsn)
+
+	return dbConn, err
+}
+
+func createRedisConnectionInstance() *redis.Client {
+	redisHost := viper.GetString(`database.redis.host`)
+	redisPort := viper.GetString(`database.redis.port`)
+	redisAddr := fmt.Sprintf("%s:%s", redisHost, redisPort)
+
+	redisPassword := viper.GetString(`database.redis.password`)
+	client := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: redisPassword,
+		DB:       0,
+	})
+
+	return client
 }

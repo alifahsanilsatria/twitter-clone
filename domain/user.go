@@ -15,8 +15,18 @@ type SignUpResult struct {
 	Id int64 `json:"id"`
 }
 
+type SignInParam struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type SignInResult struct {
+	Token string `json:"token"`
+}
+
 type UserUsecase interface {
 	SignUp(ctx context.Context, param SignUpParam) (SignUpResult, error)
+	SignIn(ctx context.Context, param SignInParam) (SignInResult, error)
 }
 
 type GetUserByUsernameOrEmailParam struct {
@@ -39,7 +49,17 @@ type CreateNewUserAccountResult struct {
 	Id int64
 }
 
+type GetUserByUsernameParam struct {
+	Username string
+}
+
+type GetUserByUsernameResult struct {
+	Id             int32
+	HashedPassword string
+}
+
 type UserRepository interface {
 	GetUserByUsernameOrEmail(ctx context.Context, param GetUserByUsernameOrEmailParam) (GetUserByUsernameOrEmailResult, error)
 	CreateNewUserAccount(ctx context.Context, param CreateNewUserAccountParam) (CreateNewUserAccountResult, error)
+	GetUserByUsername(ctx context.Context, param GetUserByUsernameParam) (GetUserByUsernameResult, error)
 }

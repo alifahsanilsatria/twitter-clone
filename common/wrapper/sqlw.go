@@ -1,4 +1,4 @@
-package sqlw
+package wrapper
 
 import (
 	"context"
