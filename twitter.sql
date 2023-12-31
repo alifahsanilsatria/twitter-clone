@@ -1,4 +1,4 @@
-CREATE TABLE user (
+CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   username VARCHAR(15) UNIQUE NOT NULL,
   password TEXT NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE tweet (
   is_deleted BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP,
-  CONSTRAINT fk_tweet_user FOREIGN KEY (user_id) REFERENCES user(id),
+  CONSTRAINT fk_tweet_user FOREIGN KEY (user_id) REFERENCES users(id),
   CONSTRAINT fk_tweet_tweet FOREIGN KEY (parent_id) REFERENCES tweet(id)
 );
 
@@ -29,8 +29,8 @@ CREATE TABLE user_following (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP,
   CONSTRAINT unique_following UNIQUE (user_id, following_user_id),
-  CONSTRAINT fk_user_following_user FOREIGN KEY (user_id) REFERENCES user(id),
-  CONSTRAINT fk_user_following_following_user FOREIGN KEY (following_user_id) REFERENCES user(id)
+  CONSTRAINT fk_user_following_user FOREIGN KEY (user_id) REFERENCES users(id),
+  CONSTRAINT fk_user_following_following_user FOREIGN KEY (following_user_id) REFERENCES users(id)
 );
 
 CREATE TABLE tweet_map_child_tweet (
@@ -52,7 +52,7 @@ CREATE TABLE user_session (
   is_deleted BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP,
-  CONSTRAINT fk_user_session_user FOREIGN KEY (user_id) REFERENCES user(id)
+  CONSTRAINT fk_user_session_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE retweet (
@@ -63,7 +63,7 @@ CREATE TABLE retweet (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP,
   CONSTRAINT unique_retweet UNIQUE (user_id, tweet_id),
-  CONSTRAINT fk_retweet_user FOREIGN KEY (user_id) REFERENCES user(id),
+  CONSTRAINT fk_retweet_user FOREIGN KEY (user_id) REFERENCES users(id),
   CONSTRAINT fk_retweet_tweet FOREIGN KEY (tweet_id) REFERENCES tweet(id)
 );
 
@@ -75,6 +75,6 @@ CREATE TABLE likes (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP,
   CONSTRAINT unique_likes UNIQUE (user_id, tweet_id),
-  CONSTRAINT fk_likes_user FOREIGN KEY (user_id) REFERENCES user(id),
+  CONSTRAINT fk_likes_user FOREIGN KEY (user_id) REFERENCES users(id),
   CONSTRAINT fk_likes_tweet FOREIGN KEY (tweet_id) REFERENCES tweet(id)
 );

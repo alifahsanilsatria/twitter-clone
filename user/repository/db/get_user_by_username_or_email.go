@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
@@ -15,9 +16,9 @@ func (repo *userRepository) GetUserByUsernameOrEmail(ctx context.Context, param 
 	}
 	query := `
 		select id
-		from user u
-		where username = $1
-		or email = $2
+		from users u
+		where u.username = $1
+		or u.email = $2
 	`
 
 	args := []interface{}{
@@ -29,19 +30,14 @@ func (repo *userRepository) GetUserByUsernameOrEmail(ctx context.Context, param 
 
 	response := domain.GetUserByUsernameOrEmailResult{}
 	errScan := queryRowContextResp.Scan(&response.Id)
-	if errScan != nil {
+	if errScan != nil && errScan != sql.ErrNoRows {
 		logData["error_scan"] = errScan.Error()
 		repo.logger.
 			WithFields(logData).
 			WithError(errScan).
 			Errorln("error on scan")
-	} else {
-		logData["response"] = fmt.Sprintf("%+v", response)
-		repo.logger.
-			WithFields(logData).
-			WithError(errScan).
-			Debugln("success get response")
+		return response, errScan
 	}
 
-	return response, errScan
+	return response, nil
 }

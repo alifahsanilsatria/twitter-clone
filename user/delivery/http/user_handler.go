@@ -23,4 +23,6 @@ func NewUserHandler(
 	}
 	e.POST("/sign-up", handler.SignUp)
 	e.POST("/sign-in", handler.SignIn)
+	e.POST("/sign-out", handler.SignOut)
+	e.GET("/ping", handler.Ping)
 }

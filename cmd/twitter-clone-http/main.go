@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 
 	"github.com/go-redis/redis/v8"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 	"github.com/spf13/viper"
 
@@ -18,6 +16,7 @@ import (
 	userDBRepository "github.com/alifahsanilsatria/twitter-clone/user/repository/db"
 	userUsecase "github.com/alifahsanilsatria/twitter-clone/user/usecase"
 	userSessionRedisRepository "github.com/alifahsanilsatria/twitter-clone/user_session/repository/redis"
+	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 )
 
@@ -77,25 +76,22 @@ func main() {
 		Handler: e,
 	}
 
+	log.Printf("service is listening at port %s", serverListener.Addr)
+
 	if err := serverListener.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
 
-	return
 }
 
 func createSQLConnectionInstance() (*sql.DB, error) {
 	dbHost := viper.GetString(`database.sql.host`)
-	dbPort := viper.GetString(`database.sql.port`)
+	// dbPort := viper.GetString(`database.sql.port`)
 	dbUser := viper.GetString(`database.sql.user`)
 	dbPass := viper.GetString(`database.sql.pass`)
 	dbName := viper.GetString(`database.sql.name`)
-	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
-	val := url.Values{}
-	val.Add("parseTime", "1")
-	val.Add("loc", "Asia/Jakarta")
-	dsn := fmt.Sprintf("%s?%s", connection, val.Encode())
-	dbConn, err := sql.Open(`postgresql`, dsn)
+	connection := fmt.Sprintf("postgres://%s:%s@%s/%s", dbUser, dbPass, dbHost, dbName)
+	dbConn, err := sql.Open(`postgres`, connection)
 
 	return dbConn, err
 }
