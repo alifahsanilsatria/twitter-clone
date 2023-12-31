@@ -1,0 +1,58 @@
+services:
+  postgresql:
+    image: postgres:14.10
+    container_name: postgresql
+    environment:
+      - POSTGRES_USER=twitter_clone
+      - POSTGRES_PASSWORD=twitterclone123
+      - POSTGRES_DB=twitter
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - twitter_network
+    healthcheck:  
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+
+  redis:
+    image: redis:7.2
+    container_name: redis
+    init: true
+    ports:
+      - 6379:6379
+    networks:
+      - twitter_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 2s
+      retries: 10 
+    restart: unless-stopped
+
+
+  api-golang:
+    image: api-golang 
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 9090:9090
+    networks:
+      - twitter_network
+    restart: unless-stopped
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+networks:
+  twitter_network:
+    
+volumes:
+  pgdata:

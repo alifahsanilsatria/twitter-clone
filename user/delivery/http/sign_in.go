@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,8 +16,9 @@ func (handler *userHandler) SignIn(c echo.Context) error {
 	logData := logrus.Fields{
 		"method": "userHandler.SignIn",
 	}
+
 	var reqPayload domain.SignInParam
-	errParsingReqPayload := c.Bind(&reqPayload)
+	errParsingReqPayload := json.NewDecoder(c.Request().Body).Decode(&reqPayload)
 	if errParsingReqPayload != nil {
 		logData["error_parsing_request_payload"] = errParsingReqPayload.Error()
 		handler.logger.

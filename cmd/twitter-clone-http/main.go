@@ -86,12 +86,13 @@ func main() {
 
 func createSQLConnectionInstance() (*sql.DB, error) {
 	dbHost := viper.GetString(`database.sql.host`)
-	// dbPort := viper.GetString(`database.sql.port`)
+	dbPort := viper.GetString(`database.sql.port`)
 	dbUser := viper.GetString(`database.sql.user`)
 	dbPass := viper.GetString(`database.sql.pass`)
 	dbName := viper.GetString(`database.sql.name`)
-	connection := fmt.Sprintf("postgres://%s:%s@%s/%s", dbUser, dbPass, dbHost, dbName)
-	dbConn, err := sql.Open(`postgres`, connection)
+	psqlInfo := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPass, dbHost, dbPort, dbName)
+
+	dbConn, err := sql.Open(`postgres`, psqlInfo)
 
 	return dbConn, err
 }
