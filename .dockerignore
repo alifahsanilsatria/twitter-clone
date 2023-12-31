@@ -1,0 +1,6 @@
+.gitignore
+clean-arch.png
+docker-compose.yml
+LICENSE*
+README.md
+twitter.sql
