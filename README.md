@@ -24,3 +24,7 @@ This project has 4 Domain layer :
 ![golang clean architecture](https://github.com/alifahsanilsatria/twitter-clone/raw/master/clean-arch.png)
 
 It may different already, but the concept still the same in application level
+
+#### How to run repository
+Since this project use docker compose, you can simply run this command:
+```docker-compose up --build```
