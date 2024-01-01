@@ -6,17 +6,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type userRepository struct {
+type tweetRepository struct {
 	db     commonWrapper.SQLWrapper
+	dbTx   commonWrapper.SQLTxWrapper
 	logger *logrus.Logger
 }
 
 func NewUserRepository(
 	db commonWrapper.SQLWrapper,
+	dbTx commonWrapper.SQLTxWrapper,
 	logger *logrus.Logger,
-) domain.UserRepository {
-	return &userRepository{
+) domain.TweetRepository {
+	return &tweetRepository{
 		db:     db,
+		dbTx:   dbTx,
 		logger: logger,
 	}
 }

@@ -5,19 +5,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type userUsecase struct {
-	userRepository        domain.UserRepository
+type tweetUsecase struct {
+	tweetRepository       domain.TweetRepository
 	userSessionRepository domain.UserSessionRepository
 	logger                *logrus.Logger
 }
 
-func NewUserUsecase(
-	userRepository domain.UserRepository,
+func NewTweetUsecase(
+	tweetRepository domain.TweetRepository,
 	userSessionRepository domain.UserSessionRepository,
 	logger *logrus.Logger,
-) domain.UserUsecase {
-	return &userUsecase{
-		userRepository:        userRepository,
+) domain.TweetUsecase {
+	return &tweetUsecase{
+		tweetRepository:       tweetRepository,
 		userSessionRepository: userSessionRepository,
 		logger:                logger,
 	}

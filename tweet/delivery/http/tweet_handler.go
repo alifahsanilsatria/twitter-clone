@@ -1,0 +1,25 @@
+package http
+
+import (
+	"github.com/labstack/echo"
+
+	"github.com/alifahsanilsatria/twitter-clone/domain"
+	"github.com/sirupsen/logrus"
+)
+
+type tweetHandler struct {
+	tweetUsecase domain.TweetUsecase
+	logger       *logrus.Logger
+}
+
+func NewTweetHandler(
+	e *echo.Echo,
+	us domain.TweetUsecase,
+	logger *logrus.Logger,
+) {
+	handler := &tweetHandler{
+		tweetUsecase: us,
+		logger:       logger,
+	}
+	e.POST("/tweet", handler.PublishTweet)
+}
