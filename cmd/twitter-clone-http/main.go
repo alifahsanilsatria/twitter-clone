@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -11,6 +12,9 @@ import (
 	"github.com/labstack/echo"
 	"github.com/spf13/viper"
 
+	tweetHandler "github.com/alifahsanilsatria/twitter-clone/tweet/delivery/http"
+	tweetDBRepository "github.com/alifahsanilsatria/twitter-clone/tweet/repository/db"
+	tweetUsecase "github.com/alifahsanilsatria/twitter-clone/tweet/usecase"
 	userHandler "github.com/alifahsanilsatria/twitter-clone/user/delivery/http"
 	userMiddleware "github.com/alifahsanilsatria/twitter-clone/user/delivery/http/middleware"
 	userDBRepository "github.com/alifahsanilsatria/twitter-clone/user/repository/db"
@@ -58,6 +62,11 @@ func main() {
 		}
 	}()
 
+	sqlTxConn, err := sqlConn.BeginTx(context.Background(), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	redisConn := createRedisConnectionInstance()
 
 	e := echo.New()
@@ -70,6 +79,10 @@ func main() {
 
 	userUsecase := userUsecase.NewUserUsecase(userRepository, userSessionRepository, logger)
 	userHandler.NewUserHandler(e, userUsecase, logger)
+
+	tweetRepository := tweetDBRepository.NewUserRepository(sqlConn, sqlTxConn, logger)
+	tweetUsecase := tweetUsecase.NewTweetUsecase(tweetRepository, userSessionRepository, logger)
+	tweetHandler.NewTweetHandler(e, tweetUsecase, logger)
 
 	serverListener := http.Server{
 		Addr:    viper.GetString("server.address"),
