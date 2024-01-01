@@ -28,3 +28,6 @@ It may different already, but the concept still the same in application level
 #### How to run repository
 Since this project use docker compose, you can simply run this command:
 ```docker-compose up --build```
+
+If you want to stop & remove containers & networks, run this command:
+```docker-compose down```
