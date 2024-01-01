@@ -18,7 +18,9 @@ func (uc *userUsecase) SignIn(ctx context.Context, param domain.SignInParam) (do
 		"param":  fmt.Sprintf("%+v", param),
 	}
 
-	getUserByUsernameParam := domain.GetUserByUsernameParam{}
+	getUserByUsernameParam := domain.GetUserByUsernameParam{
+		Username: param.Username,
+	}
 	getUserByUsernameResult, errGetUserByUsername := uc.userRepository.GetUserByUsername(ctx, getUserByUsernameParam)
 	if errGetUserByUsername != nil {
 		logData["error_get_user_by_username"] = errGetUserByUsername.Error()
