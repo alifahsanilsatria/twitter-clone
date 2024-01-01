@@ -23,9 +23,11 @@ services:
   redis:
     image: redis:7.2
     container_name: redis
-    init: true
     ports:
       - 6379:6379
+    volumes:
+      - redisdata:/var/lib/redis/data
+    command: /bin/sh -c "redis-server --requirepass twitterclone123"
     networks:
       - twitter_network
     healthcheck:
@@ -56,3 +58,4 @@ networks:
     
 volumes:
   pgdata:
+  redisdata:

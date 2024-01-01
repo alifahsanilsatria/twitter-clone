@@ -106,7 +106,7 @@ func createRedisConnectionInstance() *redis.Client {
 	client := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
 		Password: redisPassword,
-		DB:       0,
+		DB:       viper.GetInt(`database.redis.db_number`),
 	})
 
 	return client

@@ -16,7 +16,7 @@ func (repo *userRepository) GetUserByUsername(ctx context.Context, param domain.
 	}
 
 	query := `
-		select id
+		select id, password
 		from users u
 		where u.username = $1
 	`
@@ -28,7 +28,7 @@ func (repo *userRepository) GetUserByUsername(ctx context.Context, param domain.
 	queryRowContextResp := repo.db.QueryRowContext(ctx, query, args...)
 
 	response := domain.GetUserByUsernameResult{}
-	errScan := queryRowContextResp.Scan(&response.Id)
+	errScan := queryRowContextResp.Scan(&response.Id, &response.HashedPassword)
 	if errScan != nil && errScan != sql.ErrNoRows {
 		logData["error_scan"] = errScan.Error()
 		repo.logger.
