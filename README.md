@@ -1,6 +1,6 @@
 ## Description
 
-This is an example of implementation of Twitter Backend with Clean Architecture in Go (Golang) projects.
+This is an example backend twitter-clone implementation with Clean Architecture in Go (Golang).
 
 Rule of Clean Architecture by Uncle Bob
 
@@ -23,11 +23,21 @@ This project has 4 Domain layer :
 
 ![golang clean architecture](https://github.com/alifahsanilsatria/twitter-clone/raw/master/clean-arch.png)
 
-It may different already, but the concept still the same in application level
+It may different already, but the concept still the same in application level.
+
+Here are our repository structure 
 
 #### How to run repository
-Since this project use docker compose, you can simply run this command:
+1. Install & run docker engine or desktop in your computer
+2. Since this project use docker compose, you can simply run this command:
 ```docker-compose up --build```
+3. If this is the first time you run this docker compose on your computer. skip this step if you run this for second or above times:
+a. login to postgresql with the following credentials: 
+    * username = twitter_clone
+    * password = twitterclone123
+    * host = localhost
+    * port = 5432
 
-If you want to stop & remove containers & networks, run this command:
+    b. execute every query in twitter.sql
+3. If you want to stop & remove containers & networks, run this command:
 ```docker-compose down```
