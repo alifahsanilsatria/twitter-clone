@@ -1,6 +1,6 @@
 ## Description
 
-This is an example backend twitter-clone implementation with Clean Architecture in Go (Golang).
+This is an example backend twitter-clone implementation with Clean Architecture in Go (Golang). Architecture in this project is inspired from https://github.com/bxcodec/go-clean-arch branch v3
 
 Rule of Clean Architecture by Uncle Bob
 
@@ -44,5 +44,5 @@ Here are our repository structure
 
     b. execute every query in twitter.sql
 
-3. If you want to stop & remove containers & networks, run this command:
+4. If you want to stop & remove containers & networks, run this command:
     ```docker-compose down```
