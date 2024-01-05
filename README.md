@@ -29,15 +29,20 @@ Here are our repository structure
 
 #### How to run repository
 1. Install & run docker engine or desktop in your computer
+
 2. Since this project use docker compose, you can simply run this command:
-```docker-compose up --build```
+    ```docker-compose up --build```
+
 3. If this is the first time you run this docker compose on your computer. skip this step if you run this for second or above times:
-a. login to postgresql with the following credentials: 
-    * username = twitter_clone
-    * password = twitterclone123
-    * host = localhost
-    * port = 5432
+
+    a. login to postgresql with the following credentials: 
+        
+        - username = twitter_clone
+        - password = twitterclone123
+        - host = localhost
+        - port = 5432
 
     b. execute every query in twitter.sql
+
 3. If you want to stop & remove containers & networks, run this command:
-```docker-compose down```
+    ```docker-compose down```
