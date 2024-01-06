@@ -1,23 +1,35 @@
  # Use the official Golang image with version 1.21.5 as the base image
-FROM golang:1.21.5
+FROM golang:1.21.5 as build-base
 
 # Set the working directory inside the container
 WORKDIR /app
 
 COPY go.mod go.sum ./
-RUN --mount=type=cache,target=/go/pkg/mod/cache \
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
     go mod download
+
+RUN useradd -u 1001 nonroot
 
 # Copy the local package files to the container's workspace
 COPY . .
 
 # Build the Golang application
-RUN --mount=type=cache,target=/go/pkg/mod/cache \
-    --mount=type=cache,target=/go-build \
-    go build -o myapp ./cmd/twitter-clone-http/main.go
+RUN go build \
+    --ldflags="-linkmode external -extldflags -static" \
+    -o myapp ./cmd/twitter-clone-http/main.go
+ 
+FROM scratch
 
-# Expose the port that the application will run on (change to your desired port)
-EXPOSE 9090
+WORKDIR /
+
+COPY --from=build-base /etc/passwd /etc/passwd
+
+COPY --from=build-base --chown=nonroot:nonroot /app/config.json /
+
+COPY --from=build-base --chown=nonroot:nonroot /app/myapp /
+
+USER nonroot
 
 # Command to run the executable
-CMD ["./myapp"]
+CMD ["/myapp"]
