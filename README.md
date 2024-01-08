@@ -25,7 +25,8 @@ This project has 4 Domain layer :
 
 It may different already, but the concept still the same in application level.
 
-Here are our repository structure 
+Here are the design document:
+https://docs.google.com/document/d/1bsO0e2wWFvw-jAbuc9BGonfC_15wZYgqUg7GeniQrOo/edit?usp=sharing
 
 #### How to run repository
 1. Install & run docker engine or desktop in your computer
