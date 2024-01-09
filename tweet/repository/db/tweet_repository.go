@@ -12,7 +12,7 @@ type tweetRepository struct {
 	logger *logrus.Logger
 }
 
-func NewUserRepository(
+func NewTweetRepository(
 	db commonWrapper.SQLWrapper,
 	dbTx commonWrapper.SQLTxWrapper,
 	logger *logrus.Logger,
