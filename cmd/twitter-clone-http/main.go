@@ -80,7 +80,7 @@ func main() {
 	userUsecase := userUsecase.NewUserUsecase(userRepository, userSessionRepository, logger)
 	userHandler.NewUserHandler(e, userUsecase, logger)
 
-	tweetRepository := tweetDBRepository.NewUserRepository(sqlConn, sqlTxConn, logger)
+	tweetRepository := tweetDBRepository.NewTweetRepository(sqlConn, sqlTxConn, logger)
 	tweetUsecase := tweetUsecase.NewTweetUsecase(tweetRepository, userSessionRepository, logger)
 	tweetHandler.NewTweetHandler(e, tweetUsecase, logger)
 

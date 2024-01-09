@@ -22,4 +22,5 @@ func NewTweetHandler(
 		logger:       logger,
 	}
 	e.POST("/tweet", handler.PublishTweet)
+	e.DELETE("/tweet", handler.DeleteTweet)
 }
