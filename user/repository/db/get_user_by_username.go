@@ -11,19 +11,19 @@ import (
 
 func (repo *userRepository) GetUserByUsername(ctx context.Context, param domain.GetUserByUsernameParam) (domain.GetUserByUsernameResult, error) {
 	logData := logrus.Fields{
-		"method": "userRepository.GetUserByUsername",
-		"param":  fmt.Sprintf("%+v", param),
+		"method":     "userRepository.GetUserByUsername",
+		"request_id": ctx.Value("request_id"),
+		"param":      fmt.Sprintf("%+v", param),
 	}
 
-	query := `
-		select id, password
-		from users u
-		where u.username = $1
-	`
+	query := `select id, password from users u where u.username = $1`
 
 	args := []interface{}{
 		param.Username,
 	}
+
+	logData["query"] = query
+	logData["args"] = fmt.Sprintf("%+v", args)
 
 	queryRowContextResp := repo.db.QueryRowContext(ctx, query, args...)
 
@@ -37,6 +37,11 @@ func (repo *userRepository) GetUserByUsername(ctx context.Context, param domain.
 			Errorln("error on scan")
 		return response, errScan
 	}
+
+	logData["response"] = fmt.Sprintf("%+v", response)
+	repo.logger.
+		WithFields(logData).
+		Infoln("success GetUserByUsername")
 
 	return response, nil
 }

@@ -4,7 +4,14 @@ import (
 	"context"
 )
 
-type SignUpParam struct {
+type SignUpRequestPayload struct {
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	Email        string `json:"email"`
+	CompleteName string `json:"complete_name"`
+}
+
+type SignUpUsecaseParam struct {
 	Username     string `json:"username"`
 	Password     string `json:"password"`
 	Email        string `json:"email"`
@@ -15,7 +22,12 @@ type SignUpResult struct {
 	Id int64 `json:"id"`
 }
 
-type SignInParam struct {
+type SignInRequestPayload struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type SignInUsecaseParam struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
@@ -24,7 +36,7 @@ type SignInResult struct {
 	Token string `json:"token"`
 }
 
-type SignOutParam struct {
+type SignOutUsecaseParam struct {
 	Token string
 }
 
@@ -32,9 +44,9 @@ type SignOutResult struct {
 }
 
 type UserUsecase interface {
-	SignUp(ctx context.Context, param SignUpParam) (SignUpResult, error)
-	SignIn(ctx context.Context, param SignInParam) (SignInResult, error)
-	SignOut(ctx context.Context, param SignOutParam) (SignOutResult, error)
+	SignUp(ctx context.Context, param SignUpUsecaseParam) (SignUpResult, error)
+	SignIn(ctx context.Context, param SignInUsecaseParam) (SignInResult, error)
+	SignOut(ctx context.Context, param SignOutUsecaseParam) (SignOutResult, error)
 }
 
 type GetUserByUsernameOrEmailParam struct {

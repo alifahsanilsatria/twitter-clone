@@ -11,8 +11,9 @@ import (
 
 func (repo *userRepository) CreateNewUserAccount(ctx context.Context, param domain.CreateNewUserAccountParam) (domain.CreateNewUserAccountResult, error) {
 	logData := logrus.Fields{
-		"method": "userRepository.CreateNewUserAccount",
-		"param":  fmt.Sprintf("%+v", param),
+		"method":     "userRepository.CreateNewUserAccount",
+		"request_id": ctx.Value("request_id"),
+		"param":      fmt.Sprintf("%+v", param),
 	}
 
 	query := `
@@ -33,6 +34,9 @@ func (repo *userRepository) CreateNewUserAccount(ctx context.Context, param doma
 		time.Now(),
 	}
 
+	logData["query"] = query
+	logData["args"] = fmt.Sprintf("%+v", args)
+
 	_, errQuery := repo.db.ExecContext(ctx, query, args...)
 	if errQuery != nil {
 		logData["error_query"] = errQuery.Error()
@@ -42,6 +46,10 @@ func (repo *userRepository) CreateNewUserAccount(ctx context.Context, param doma
 			Errorln("error on insert query")
 		return domain.CreateNewUserAccountResult{}, errQuery
 	}
+
+	repo.logger.
+		WithFields(logData).
+		Infoln("success CreateNewUserAccount")
 
 	return domain.CreateNewUserAccountResult{}, nil
 }
