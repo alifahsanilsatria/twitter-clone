@@ -11,8 +11,9 @@ import (
 
 func (repo *userRepository) GetUserByUsernameOrEmail(ctx context.Context, param domain.GetUserByUsernameOrEmailParam) (domain.GetUserByUsernameOrEmailResult, error) {
 	logData := logrus.Fields{
-		"method": "userRepository.GetUserByUsernameOrEmail",
-		"param":  fmt.Sprintf("%+v", param),
+		"method":     "userRepository.GetUserByUsernameOrEmail",
+		"request_id": ctx.Value("request_id"),
+		"param":      fmt.Sprintf("%+v", param),
 	}
 	query := `
 		select id
@@ -26,6 +27,9 @@ func (repo *userRepository) GetUserByUsernameOrEmail(ctx context.Context, param 
 		param.Email,
 	}
 
+	logData["query"] = query
+	logData["args"] = fmt.Sprintf("%+v", args)
+
 	queryRowContextResp := repo.db.QueryRowContext(ctx, query, args...)
 
 	response := domain.GetUserByUsernameOrEmailResult{}
@@ -38,6 +42,11 @@ func (repo *userRepository) GetUserByUsernameOrEmail(ctx context.Context, param 
 			Errorln("error on scan")
 		return response, errScan
 	}
+
+	logData["response"] = fmt.Sprintf("%+v", response)
+	repo.logger.
+		WithFields(logData).
+		Infoln("success GetUserByUsernameOrEmail")
 
 	return response, nil
 }

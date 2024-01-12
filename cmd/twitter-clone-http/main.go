@@ -72,7 +72,7 @@ func main() {
 	e := echo.New()
 
 	userMiddleWare := userMiddleware.InitMiddleware()
-	e.Use(userMiddleWare.CORS)
+	e.Use(userMiddleWare.RequestId)
 
 	userRepository := userDBRepository.NewUserRepository(sqlConn, logger)
 	userSessionRepository := userSessionRedisRepository.NewUserSessionRepository(redisConn, logger)

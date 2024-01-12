@@ -12,29 +12,29 @@ type DeleteTweetRequestPayload struct {
 	UserId  int32 `json:"user_id"`
 }
 
-type PublishTweetParam struct {
+type PublishTweetUsecaseParam struct {
 	Token    string
 	ParentId int32
 	Content  string
 }
 
-type PublishTweetResult struct {
+type PublishTweetUsecaseResult struct {
 	TweetId int32
 }
 
-type DeleteTweetParam struct {
+type DeleteTweetUsecaseParam struct {
 	Token   string
 	TweetId int32
 	UserId  int32
 }
 
-type DeleteTweetResult struct {
+type DeleteTweetUsecaseResult struct {
 	TweetId int32
 }
 
 type TweetUsecase interface {
-	PublishTweet(ctx context.Context, param PublishTweetParam) (PublishTweetResult, error)
-	DeleteTweet(ctx context.Context, param DeleteTweetParam) (DeleteTweetResult, error)
+	PublishTweet(ctx context.Context, param PublishTweetUsecaseParam) (PublishTweetUsecaseResult, error)
+	DeleteTweet(ctx context.Context, param DeleteTweetUsecaseParam) (DeleteTweetUsecaseResult, error)
 }
 
 type CreateNewTweetParam struct {
