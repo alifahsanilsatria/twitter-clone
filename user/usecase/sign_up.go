@@ -11,15 +11,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (uc *userUsecase) SignUp(ctx context.Context, param domain.SignUpParam) (domain.SignUpResult, error) {
+func (uc *userUsecase) SignUp(ctx context.Context, param domain.SignUpUsecaseParam) (domain.SignUpResult, error) {
 	logData := logrus.Fields{
-		"method": "userUsecase.SignUp",
-		"param":  fmt.Sprintf("%+v", param),
+		"method":     "userUsecase.SignUp",
+		"request_id": ctx.Value("request_id"),
+		"param":      fmt.Sprintf("%+v", param),
 	}
+
 	getUserByUsernameOrEmailParam := domain.GetUserByUsernameOrEmailParam{
 		Username: strings.ToLower(param.Username),
 		Email:    param.Email,
 	}
+
+	logData["get_user_by_username_or_email_param"] = fmt.Sprintf("%+v", getUserByUsernameOrEmailParam)
+
 	getUserByUsernameOrEmailResp, errGetUserByUsernameOrEmail := uc.userRepository.GetUserByUsernameOrEmail(ctx, getUserByUsernameOrEmailParam)
 	if errGetUserByUsernameOrEmail != nil {
 		logData["error_get_user_by_username_or_email"] = errGetUserByUsernameOrEmail.Error()
@@ -29,6 +34,8 @@ func (uc *userUsecase) SignUp(ctx context.Context, param domain.SignUpParam) (do
 			Errorln("error on GetUserByUsernameOrEmail")
 		return domain.SignUpResult{}, errGetUserByUsernameOrEmail
 	}
+
+	logData["get_user_by_username_or_email_result"] = fmt.Sprintf("%+v", getUserByUsernameOrEmailResp)
 
 	if getUserByUsernameOrEmailResp.Id > 0 {
 		err := errors.New("username or email already exists")
@@ -53,6 +60,8 @@ func (uc *userUsecase) SignUp(ctx context.Context, param domain.SignUpParam) (do
 		CompleteName:   param.CompleteName,
 	}
 
+	logData["create_new_user_account_param"] = fmt.Sprintf("%+v", createNewUserAccountParam)
+
 	createNewUserAccountResp, errCreateNewUserAccount := uc.userRepository.CreateNewUserAccount(ctx, createNewUserAccountParam)
 	if errCreateNewUserAccount != nil {
 		logData["error_create_new_user_account"] = errCreateNewUserAccount.Error()
@@ -62,6 +71,12 @@ func (uc *userUsecase) SignUp(ctx context.Context, param domain.SignUpParam) (do
 			Errorln("error on CreateNewUserAccount")
 		return domain.SignUpResult{}, errCreateNewUserAccount
 	}
+
+	logData["create_new_user_account_resp"] = fmt.Sprintf("%+v", createNewUserAccountResp)
+
+	uc.logger.
+		WithFields(logData).
+		Infoln("success sign up")
 
 	response := domain.SignUpResult{
 		Id: createNewUserAccountResp.Id,

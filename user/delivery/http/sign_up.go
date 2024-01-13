@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,19 +14,25 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (handler *userHandler) SignUp(c echo.Context) error {
+func (handler *userHandler) SignUp(echoCtx echo.Context) error {
+	requestId := echoCtx.Request().Header.Get("Request-Id")
+
 	logData := logrus.Fields{
-		"method": "userHandler.SignUp",
+		"method":     "userHandler.SignUp",
+		"request_id": echoCtx.Request().Header.Get("Request-Id"),
 	}
-	var reqPayload domain.SignUpParam
-	errParsingReqPayload := json.NewDecoder(c.Request().Body).Decode(&reqPayload)
+
+	ctx := context.WithValue(context.Background(), "request_id", requestId)
+
+	var reqPayload domain.SignUpRequestPayload
+	errParsingReqPayload := json.NewDecoder(echoCtx.Request().Body).Decode(&reqPayload)
 	if errParsingReqPayload != nil {
 		logData["error_parsing_request_payload"] = errParsingReqPayload.Error()
 		handler.logger.
 			WithFields(logData).
 			WithError(errParsingReqPayload).
 			Errorln("error when parsing request payload")
-		return c.JSON(http.StatusUnprocessableEntity, errParsingReqPayload.Error())
+		return echoCtx.JSON(http.StatusUnprocessableEntity, errParsingReqPayload.Error())
 	}
 
 	logData["request_payload"] = fmt.Sprintf("%+v", reqPayload)
@@ -37,24 +44,37 @@ func (handler *userHandler) SignUp(c echo.Context) error {
 			WithFields(logData).
 			WithError(errvalidateSignUpParam).
 			Errorln("error when validate sign up param")
-		return c.JSON(http.StatusBadRequest, errvalidateSignUpParam.Error())
+		return echoCtx.JSON(http.StatusBadRequest, errvalidateSignUpParam.Error())
 	}
 
-	ctx := c.Request().Context()
-	signUpUsecaseResult, errorSignUpUsecase := handler.userUsecase.SignUp(ctx, reqPayload)
+	signUpUsecaseParam := domain.SignUpUsecaseParam{
+		Username:     reqPayload.Username,
+		Password:     reqPayload.Password,
+		Email:        reqPayload.Email,
+		CompleteName: reqPayload.CompleteName,
+	}
+
+	logData["sign_up_usecase_param"] = fmt.Sprintf("%+v", signUpUsecaseParam)
+
+	signUpUsecaseResult, errorSignUpUsecase := handler.userUsecase.SignUp(ctx, signUpUsecaseParam)
 	if errorSignUpUsecase != nil {
 		logData["error_sign_up_usecase"] = errorSignUpUsecase.Error()
 		handler.logger.
 			WithFields(logData).
 			WithError(errorSignUpUsecase).
 			Errorln("error when parsing request payload")
-		return c.JSON(http.StatusInternalServerError, errorSignUpUsecase.Error())
+		return echoCtx.JSON(http.StatusInternalServerError, errorSignUpUsecase.Error())
 	}
 
-	return c.JSON(http.StatusOK, signUpUsecaseResult)
+	logData["sign_up_usecase_result"] = fmt.Sprintf("%+v", signUpUsecaseResult)
+	handler.logger.
+		WithFields(logData).
+		Infoln("success sign up")
+
+	return echoCtx.JSON(http.StatusOK, signUpUsecaseResult)
 }
 
-func validateSignUpParam(param domain.SignUpParam) error {
+func validateSignUpParam(param domain.SignUpRequestPayload) error {
 	if param.Username == "" {
 		return errors.New("username is empty")
 	}
