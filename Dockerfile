@@ -25,8 +25,6 @@ WORKDIR /
 
 COPY --from=build-base /etc/passwd /etc/passwd
 
-COPY --from=build-base --chown=nonroot:nonroot /app/config.json /
-
 COPY --from=build-base --chown=nonroot:nonroot /app/myapp /
 
 USER nonroot

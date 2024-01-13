@@ -10,8 +10,8 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo"
-	"github.com/spf13/viper"
 
+	"github.com/alifahsanilsatria/twitter-clone/common"
 	tweetHandler "github.com/alifahsanilsatria/twitter-clone/tweet/delivery/http"
 	tweetDBRepository "github.com/alifahsanilsatria/twitter-clone/tweet/repository/db"
 	tweetUsecase "github.com/alifahsanilsatria/twitter-clone/tweet/usecase"
@@ -25,13 +25,8 @@ import (
 )
 
 func init() {
-	viper.SetConfigFile(`config.json`)
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(err)
-	}
-
-	if viper.GetBool(`debug`) {
+	debugMode := common.GetBool("DEBUG_MODE", false)
+	if debugMode {
 		log.Println("Service RUN on DEBUG mode")
 	}
 }
@@ -84,8 +79,10 @@ func main() {
 	tweetUsecase := tweetUsecase.NewTweetUsecase(tweetRepository, userSessionRepository, logger)
 	tweetHandler.NewTweetHandler(e, tweetUsecase, logger)
 
+	serviceAddress := common.GetString("TWITTER_CLONE_ADDRESS", "")
+
 	serverListener := http.Server{
-		Addr:    viper.GetString("server.address"),
+		Addr:    serviceAddress,
 		Handler: e,
 	}
 
@@ -98,12 +95,13 @@ func main() {
 }
 
 func createSQLConnectionInstance() (*sql.DB, error) {
-	dbHost := viper.GetString(`database.sql.host`)
-	dbPort := viper.GetString(`database.sql.port`)
-	dbUser := viper.GetString(`database.sql.user`)
-	dbPass := viper.GetString(`database.sql.pass`)
-	dbName := viper.GetString(`database.sql.name`)
-	psqlInfo := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPass, dbHost, dbPort, dbName)
+	dbHost := common.GetString("DB_HOST", "")
+	dbPort := common.GetInt32("DB_PORT", 0)
+	dbUser := common.GetString("DB_USER", "")
+	dbPass := common.GetString("DB_PASS", "")
+	dbName := common.GetString("DB_NAME", "")
+
+	psqlInfo := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", dbUser, dbPass, dbHost, dbPort, dbName)
 
 	dbConn, err := sql.Open(`postgres`, psqlInfo)
 
@@ -111,15 +109,16 @@ func createSQLConnectionInstance() (*sql.DB, error) {
 }
 
 func createRedisConnectionInstance() *redis.Client {
-	redisHost := viper.GetString(`database.redis.host`)
-	redisPort := viper.GetString(`database.redis.port`)
-	redisAddr := fmt.Sprintf("%s:%s", redisHost, redisPort)
+	redisHost := common.GetString("REDIS_HOST", "")
+	redisPort := common.GetInt32("REDIS_PORT", 0)
+	redisAddr := fmt.Sprintf("%s:%d", redisHost, redisPort)
+	redisPassword := common.GetString("REDIS_PASS", "")
+	redisDBNumber := common.GetInt32("REDIS_DB_NUMBER", 0)
 
-	redisPassword := viper.GetString(`database.redis.password`)
 	client := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
 		Password: redisPassword,
-		DB:       viper.GetInt(`database.redis.db_number`),
+		DB:       int(redisDBNumber),
 	})
 
 	return client
