@@ -3,11 +3,11 @@ services:
     image: postgres:14.10
     container_name: postgresql
     environment:
-      - POSTGRES_USER=twitter_clone
-      - POSTGRES_PASSWORD=twitterclone123
-      - POSTGRES_DB=twitter
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
     ports:
-      - 5432:5432
+      - ${DB_PORT}:${DB_PORT}
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -24,10 +24,10 @@ services:
     image: redis:7.2
     container_name: redis
     ports:
-      - 6379:6379
+      - ${REDIS_PORT}:${REDIS_PORT}
     volumes:
       - redisdata:/var/lib/redis/data
-    command: /bin/sh -c "redis-server --requirepass twitterclone123"
+    command: /bin/sh -c "redis-server --requirepass ${REDIS_PASS}"
     networks:
       - twitter_network
     healthcheck:
@@ -39,12 +39,13 @@ services:
 
 
   api-golang:
-    image: api-golang 
+    image: api-golang
+    container_name: backend
     build:
       context: .
       dockerfile: ./Dockerfile
     ports:
-      - 9090:9090
+      - ${TWITTER_CLONE_DOCKER_COMPOSE_PORT}:${TWITTER_CLONE_DOCKER_COMPOSE_PORT}
     networks:
       - twitter_network
     restart: unless-stopped
@@ -53,6 +54,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    env_file:
+      - .env
+
 networks:
   twitter_network:
     
