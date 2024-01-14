@@ -3,7 +3,6 @@
 This is an example backend twitter-clone implementation with Clean Architecture in Go (Golang). Architecture in this project is inspired from https://github.com/bxcodec/go-clean-arch branch v3
 
 Rule of Clean Architecture by Uncle Bob
-
 - Independent of Frameworks. The architecture does not depend on the existence of some library of feature laden software. This allows you to use such frameworks as tools, rather than having to cram your system into their limited constraints.
 - Testable. The business rules can be tested without the UI, Database, Web Server, or any other external element.
 - Independent of UI. The UI can change easily, without changing the rest of the system. A Web UI could be replaced with a console UI, for example, without changing the business rules.
