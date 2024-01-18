@@ -13,12 +13,10 @@ CREATE TABLE tweet (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL,
   content VARCHAR(160) NOT NULL,
-  parent_id INTEGER,
   is_deleted BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP,
   CONSTRAINT fk_tweet_user FOREIGN KEY (user_id) REFERENCES users(id),
-  CONSTRAINT fk_tweet_tweet FOREIGN KEY (parent_id) REFERENCES tweet(id)
 );
 
 CREATE TABLE user_following (
@@ -42,6 +40,7 @@ CREATE TABLE tweet_map_child_tweet (
   updated_at TIMESTAMP,
   CONSTRAINT fk_tweet_map_child_tweet_tweet FOREIGN KEY (tweet_id) REFERENCES tweet(id),
   CONSTRAINT fk_tweet_map_child_tweet_child_tweet FOREIGN KEY (child_tweet_id) REFERENCES tweet(id)
+  CONSTRAINT unique_tweet_map_child_tweet UNIQUE (tweet_id, child_tweet_id),
 );
 
 CREATE TABLE user_session (
