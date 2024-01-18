@@ -62,9 +62,9 @@ func (repo *tweetRepository) createNewTweetAsNewTweet(ctx context.Context, param
 
 	queryInsertTweet := `
 		insert into tweet
-		(user_id, parent_id, content, is_deleted, created_at)
+		(user_id, content, is_deleted, created_at)
 		values
-		($1, null, $2, false, $3)
+		($1, $2, false, $3)
 		returning id
 	`
 	argsQueryInsertTweet := []interface{}{
@@ -109,14 +109,13 @@ func (repo *tweetRepository) createNewTweetAsReply(ctx context.Context, param do
 
 	queryInsertTweet := `
 		insert into tweet
-		(user_id, parent_id, content, is_deleted, created_at)
+		(user_id, content, is_deleted, created_at)
 		values
-		($1, $2, $3, false, $4)
+		($1, $2, false, $3)
 		returning id
 	`
 	argsQueryInsertTweet := []interface{}{
 		param.UserId,
-		param.ParentId,
 		param.Content,
 		time.Now(),
 	}
