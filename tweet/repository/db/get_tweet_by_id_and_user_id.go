@@ -14,10 +14,11 @@ func (repo *tweetRepository) GetTweetByIdAndUserId(ctx context.Context, param do
 		"method": "tweetRepository.GetTweetByIdAndUserId",
 		"param":  fmt.Sprintf("%+v", param),
 	}
+
 	query := `
-		select tweet_id 
-		from tweet_map_child_tweet
-		where tweet_id = $1
+		select id 
+		from tweet
+		where id = $1
 		and user_id = $2
 		and is_deleted = false
 	`
