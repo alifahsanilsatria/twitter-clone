@@ -16,7 +16,7 @@ func (handler *tweetHandler) DeleteTweet(echoCtx echo.Context) error {
 	requestId := echoCtx.Request().Header.Get("Request-Id")
 
 	logData := logrus.Fields{
-		"method":     "tweetHandler.PublishTweet",
+		"method":     "tweetHandler.DeleteTweet",
 		"request_id": requestId,
 	}
 
@@ -46,7 +46,6 @@ func (handler *tweetHandler) DeleteTweet(echoCtx echo.Context) error {
 	deleteTweetUsecaseParam := domain.DeleteTweetUsecaseParam{
 		Token:   token,
 		TweetId: reqPayload.TweetId,
-		UserId:  reqPayload.UserId,
 	}
 
 	logData["delete_tweet_usecase_param"] = fmt.Sprintf("%+v", deleteTweetUsecaseParam)

@@ -32,7 +32,6 @@ type PublishTweetUsecaseResult struct {
 type DeleteTweetUsecaseParam struct {
 	Token   string
 	TweetId int32
-	UserId  int32
 }
 
 type DeleteTweetUsecaseResult struct {
