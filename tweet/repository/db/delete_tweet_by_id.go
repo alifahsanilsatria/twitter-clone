@@ -28,16 +28,6 @@ func (repo *tweetRepository) DeleteTweetById(ctx context.Context, param domain.D
 		return domain.DeleteTweetByIdResult{}, errQueryDeleteFromTweetTable
 	}
 
-	errQueryDeleteTweetMapChildByTweetId := repo.deleteFromTweetMapChildByTweetId(ctx, param)
-	if errQueryDeleteTweetMapChildByTweetId != nil {
-		logData["error_delete_from_tweet_map_child_by_tweet_id"] = errQueryDeleteTweetMapChildByTweetId.Error()
-		repo.logger.
-			WithFields(logData).
-			WithError(errQueryDeleteTweetMapChildByTweetId).
-			Errorln("error on deleteFromTweetMapChildByTweetId")
-		return domain.DeleteTweetByIdResult{}, errQueryDeleteTweetMapChildByTweetId
-	}
-
 	errQueryDeleteTweetMapChildByChildTweetId := repo.deleteFromTweetMapChildByChildTweetId(ctx, param)
 	if errQueryDeleteTweetMapChildByChildTweetId != nil {
 		logData["error_delete_from_tweet_map_child_by_child_tweet_id"] = errQueryDeleteTweetMapChildByChildTweetId.Error()
@@ -104,45 +94,6 @@ func (repo *tweetRepository) deleteFromTweetTableById(ctx context.Context, param
 	repo.logger.
 		WithFields(logData).
 		Infoln("success deleteFromTweetTableById")
-
-	return nil
-}
-
-func (repo *tweetRepository) deleteFromTweetMapChildByTweetId(ctx context.Context, param domain.DeleteTweetByIdParam) error {
-	logData := logrus.Fields{
-		"method":     "tweetRepository.deleteFromTweetTableById",
-		"request_id": ctx.Value("request_id"),
-		"param":      fmt.Sprintf("%+v", param),
-	}
-
-	queryDeleteTweetMapChildByTweetId := `
-		update tweet_map_child_tweet
-		set is_deleted = true,
-		updated_at = $1
-		where tweet_id = $2
-	`
-
-	argsQueryDeleteTweetMapChildByTweetId := []interface{}{
-		time.Now(),
-		param.TweetId,
-	}
-
-	logData["query_delete_tweet_map_child_by_tweet_id"] = queryDeleteTweetMapChildByTweetId
-	logData["args_query_delete_tweet_map_child_by_tweet_id"] = fmt.Sprintf("%+v", argsQueryDeleteTweetMapChildByTweetId)
-
-	errQueryDeleteTweetMapChildByTweetId := repo.dbTx.QueryRowContext(ctx, queryDeleteTweetMapChildByTweetId, argsQueryDeleteTweetMapChildByTweetId...).Err()
-	if errQueryDeleteTweetMapChildByTweetId != nil {
-		logData["error_query_delete_tweet_map_child_by_tweet_id"] = errQueryDeleteTweetMapChildByTweetId.Error()
-		repo.logger.
-			WithFields(logData).
-			WithError(errQueryDeleteTweetMapChildByTweetId).
-			Errorln("error on deleteFromTweetMapChildByTweetId")
-		return errQueryDeleteTweetMapChildByTweetId
-	}
-
-	repo.logger.
-		WithFields(logData).
-		Infoln("success deleteFromTweetMapChildByTweetId")
 
 	return nil
 }
