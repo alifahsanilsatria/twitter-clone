@@ -2,6 +2,10 @@ package domain
 
 import "context"
 
+type UndoRetweetRequestPayload struct {
+	TweetId int32 `json:"tweet_id"`
+}
+
 type RetweetRequestPayload struct {
 	TweetId int32 `json:"tweet_id"`
 }
@@ -42,10 +46,18 @@ type RetweetUsecaseParam struct {
 
 type RetweetUsecaseResult struct{}
 
+type UndoRetweetUsecaseParam struct {
+	Token   string
+	TweetId int32
+}
+
+type UndoRetweetUsecaseResult struct{}
+
 type TweetUsecase interface {
 	PublishTweet(ctx context.Context, param PublishTweetUsecaseParam) (PublishTweetUsecaseResult, error)
 	DeleteTweet(ctx context.Context, param DeleteTweetUsecaseParam) (DeleteTweetUsecaseResult, error)
 	Retweet(ctx context.Context, param RetweetUsecaseParam) (RetweetUsecaseResult, error)
+	UndoRetweet(ctx context.Context, param UndoRetweetUsecaseParam) (UndoRetweetUsecaseResult, error)
 }
 
 type CreateNewTweetParam struct {
@@ -82,9 +94,17 @@ type UpsertRetweetParam struct {
 
 type UpsertRetweetResult struct{}
 
+type DeleteRetweetParam struct {
+	UserId  int32
+	TweetId int32
+}
+
+type DeleteRetweetResult struct{}
+
 type TweetRepository interface {
 	CreateNewTweet(ctx context.Context, param CreateNewTweetParam) (CreateNewTweetResult, error)
 	GetTweetByIdAndUserId(ctx context.Context, param GetTweetByIdAndUserIdParam) (GetTweetByIdAndUserIdResult, error)
 	DeleteTweetById(ctx context.Context, param DeleteTweetByIdParam) (DeleteTweetByIdResult, error)
 	UpsertRetweet(ctx context.Context, param UpsertRetweetParam) (UpsertRetweetResult, error)
+	DeleteRetweet(ctx context.Context, param DeleteRetweetParam) (DeleteRetweetResult, error)
 }
