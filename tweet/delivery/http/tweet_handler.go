@@ -24,4 +24,5 @@ func NewTweetHandler(
 	e.POST("/tweet", handler.PublishTweet)
 	e.DELETE("/tweet", handler.DeleteTweet)
 	e.POST("/retweet", handler.Retweet)
+	e.DELETE("/retweet", handler.UndoRetweet)
 }
