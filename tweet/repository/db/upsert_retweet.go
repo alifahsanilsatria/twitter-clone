@@ -36,11 +36,11 @@ func (repo *tweetRepository) UpsertRetweet(ctx context.Context, param domain.Ups
 	}
 
 	logData["query_upsert_retweet"] = queryUpsertRetweet
-	logData["args_query_upsert_retwet"] = fmt.Sprintf("%+v", argsQueryUpsertRetweet)
+	logData["args_query_upsert_retweet"] = fmt.Sprintf("%+v", argsQueryUpsertRetweet)
 
 	errUpsertQuery := repo.db.QueryRowContext(ctx, queryUpsertRetweet, argsQueryUpsertRetweet...).Err()
 	if errUpsertQuery != nil {
-		logData["error_query_upsert_tweet"] = errUpsertQuery.Error()
+		logData["error_query_upsert_retweet"] = errUpsertQuery.Error()
 		repo.logger.
 			WithFields(logData).
 			WithError(errUpsertQuery).
