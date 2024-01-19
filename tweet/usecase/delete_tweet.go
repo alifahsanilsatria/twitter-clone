@@ -16,9 +16,31 @@ func (uc *tweetUsecase) DeleteTweet(ctx context.Context, param domain.DeleteTwee
 		"param":      fmt.Sprintf("%+v", param),
 	}
 
+	getUserSessionByTokenParam := domain.GetUserSessionByTokenParam{
+		Token: param.Token,
+	}
+
+	logData["get_user_session_by_token_param"] = fmt.Sprintf("%+v", getUserSessionByTokenParam)
+
+	userSession, errGetUserSession := uc.userSessionRepository.GetUserSessionByToken(ctx, getUserSessionByTokenParam)
+	if errGetUserSession != nil {
+		logData["error_get_user_session"] = errGetUserSession.Error()
+		uc.logger.
+			WithFields(logData).
+			WithError(errGetUserSession).
+			Errorln("error on GetUserSessionByToken")
+		return domain.DeleteTweetUsecaseResult{}, errGetUserSession
+	}
+
+	logData["get_user_session_by_token_result"] = fmt.Sprintf("%+v", userSession)
+
+	if userSession.UserId == 0 {
+		return domain.DeleteTweetUsecaseResult{}, errors.New("invalid or expired token")
+	}
+
 	getTweetByIdAndUserIdParam := domain.GetTweetByIdAndUserIdParam{
 		TweetId: param.TweetId,
-		UserId:  param.UserId,
+		UserId:  userSession.UserId,
 	}
 
 	logData["get_tweet_by_id_and_user_id_param"] = fmt.Sprintf("%+v", getTweetByIdAndUserIdParam)
