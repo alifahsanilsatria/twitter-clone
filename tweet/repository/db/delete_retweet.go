@@ -33,14 +33,14 @@ func (repo *tweetRepository) DeleteRetweet(ctx context.Context, param domain.Del
 	logData["query_delete_retweet"] = queryDeleteRetweet
 	logData["args_query_delete_retweet"] = fmt.Sprintf("%+v", argsQueryDeleteRetweet)
 
-	errQueryDeleteRetweet := repo.dbTx.QueryRowContext(ctx, queryDeleteRetweet, argsQueryDeleteRetweet...).Err()
-	if errQueryDeleteRetweet != nil {
-		logData["error_query_delete_retweet"] = errQueryDeleteRetweet.Error()
+	errDeleteRetweetQuery := repo.dbTx.QueryRowContext(ctx, queryDeleteRetweet, argsQueryDeleteRetweet...).Err()
+	if errDeleteRetweetQuery != nil {
+		logData["error_query_delete_retweet"] = errDeleteRetweetQuery.Error()
 		repo.logger.
 			WithFields(logData).
-			WithError(errQueryDeleteRetweet).
+			WithError(errDeleteRetweetQuery).
 			Errorln("error on update query")
-		return domain.DeleteRetweetResult{}, errQueryDeleteRetweet
+		return domain.DeleteRetweetResult{}, errDeleteRetweetQuery
 	}
 
 	result := domain.DeleteRetweetResult{}

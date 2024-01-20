@@ -2,6 +2,9 @@ package domain
 
 import "context"
 
+type UndoLikesRequestPayload struct {
+	TweetId int32 `json:"tweet_id"`
+}
 type LikeTweetRequestPayload struct {
 	TweetId int32 `json:"tweet_id"`
 }
@@ -62,12 +65,20 @@ type LikeTweetUsecaseParam struct {
 
 type LikeTweetUsecaseResult struct{}
 
+type UndoLikesUsecaseParam struct {
+	Token   string
+	TweetId int32
+}
+
+type UndoLikesUsecaseResult struct{}
+
 type TweetUsecase interface {
 	PublishTweet(ctx context.Context, param PublishTweetUsecaseParam) (PublishTweetUsecaseResult, error)
 	DeleteTweet(ctx context.Context, param DeleteTweetUsecaseParam) (DeleteTweetUsecaseResult, error)
 	Retweet(ctx context.Context, param RetweetUsecaseParam) (RetweetUsecaseResult, error)
 	UndoRetweet(ctx context.Context, param UndoRetweetUsecaseParam) (UndoRetweetUsecaseResult, error)
 	LikeTweet(ctx context.Context, param LikeTweetUsecaseParam) (LikeTweetUsecaseResult, error)
+	UndoLikes(ctx context.Context, param UndoLikesUsecaseParam) (UndoLikesUsecaseResult, error)
 }
 
 type CreateNewTweetParam struct {
@@ -118,6 +129,13 @@ type UpsertLikesParam struct {
 
 type UpsertLikesResult struct{}
 
+type DeleteLikesParam struct {
+	UserId  int32
+	TweetId int32
+}
+
+type DeleteLikesResult struct{}
+
 type TweetRepository interface {
 	CreateNewTweet(ctx context.Context, param CreateNewTweetParam) (CreateNewTweetResult, error)
 	GetTweetByIdAndUserId(ctx context.Context, param GetTweetByIdAndUserIdParam) (GetTweetByIdAndUserIdResult, error)
@@ -125,4 +143,5 @@ type TweetRepository interface {
 	UpsertRetweet(ctx context.Context, param UpsertRetweetParam) (UpsertRetweetResult, error)
 	DeleteRetweet(ctx context.Context, param DeleteRetweetParam) (DeleteRetweetResult, error)
 	UpsertLikes(ctx context.Context, param UpsertLikesParam) (UpsertLikesResult, error)
+	DeleteLikes(ctx context.Context, param DeleteLikesParam) (DeleteLikesResult, error)
 }
