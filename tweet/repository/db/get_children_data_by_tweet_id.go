@@ -19,13 +19,15 @@ func (repo *tweetRepository) GetChildrenDataByTweetId(ctx context.Context, param
 	}
 
 	query := `
-		select t.username, t.complete_name, t.content, 
+		select t.id, u.username, u.complete_name, t.content, 
 		coalesce(r.count_retweet, 0) as count_retweet,
 		coalesce(l.count_likes, 0) as count_likes,
 		coalesce(tmct_child.count_replies, 0) as count_replies
 		from tweet_map_child_tweet tmct_parent
 		join tweet t
 		on tmct_parent.child_tweet_id = t.id
+		join users u
+		on t.user_id = u.id
 		left join (
 			select r.tweet_id, count(r.user_id) as count_retweet
 			from retweet r
@@ -48,7 +50,7 @@ func (repo *tweetRepository) GetChildrenDataByTweetId(ctx context.Context, param
 		) as tmct_child
 		on tmct_parent.child_tweet_id = tmct_child.tweet_id
 		where tmct_parent.tweet_id = $1
-		and tmct_parent.is_deleted = false
+		and tmct_parent.is_deleted = false;
 	`
 
 	args := []interface{}{
@@ -67,6 +69,7 @@ func (repo *tweetRepository) GetChildrenDataByTweetId(ctx context.Context, param
 	for queryContextResp.Next() {
 		childTweet := domain.GetChildrenDataByTweetIdResult_ChildTweet{}
 		queryContextResp.Scan(
+			&childTweet.TweetId,
 			&childTweet.Username,
 			&childTweet.CompleteName,
 			&childTweet.Content,

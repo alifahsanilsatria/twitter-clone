@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
@@ -16,18 +15,20 @@ func (repo *tweetRepository) GetParentsDataByTweetId(ctx context.Context, param 
 	}
 
 	result := domain.GetParentsDataByTweetIdResult{
-		Parent: &domain.GetParentsDataByTweetIdResult_Parent{},
+		Parent: []domain.GetParentsDataByTweetIdResult_Parent{},
 	}
 
 	query := `
-		with anchestor as (
-			select t.id, t.username, t.complete_name, t.content,
+		with recursive anchestor as (
+			select t.id, u.username, u.complete_name, t.content, 
 			coalesce(r.count_retweet, 0) as count_retweet,
 			coalesce(l.count_likes, 0) as count_likes,
 			coalesce(tmct_child.count_replies, 0) as count_replies
 			from tweet_map_child_tweet tmct_parent
 			join tweet t
 			on tmct_parent.tweet_id = t.id
+			join users u
+			on t.user_id = u.id
 			left join (
 				select r.tweet_id, count(r.user_id) as count_retweet
 				from retweet r
@@ -51,10 +52,8 @@ func (repo *tweetRepository) GetParentsDataByTweetId(ctx context.Context, param 
 			on tmct_parent.tweet_id = tmct_child.tweet_id
 			where tmct_parent.child_tweet_id = $1
 			and tmct_parent.is_deleted = false
-
 			union all
-
-			select t.id, t.username, t.complete_name, t.content,
+			select t.id, u.username, u.complete_name, t.content, 
 			coalesce(r.count_retweet, 0) as count_retweet,
 			coalesce(l.count_likes, 0) as count_likes,
 			coalesce(tmct_child.count_replies, 0) as count_replies
@@ -63,6 +62,8 @@ func (repo *tweetRepository) GetParentsDataByTweetId(ctx context.Context, param 
 			on tmct_parent.child_tweet_id = a.id
 			join tweet t
 			on tmct_parent.tweet_id = t.id
+			join users u
+			on t.user_id = u.id
 			left join (
 				select r.tweet_id, count(r.user_id) as count_retweet
 				from retweet r
@@ -84,13 +85,12 @@ func (repo *tweetRepository) GetParentsDataByTweetId(ctx context.Context, param 
 				group by tmct_child.tweet_id
 			) as tmct_child
 			on tmct_parent.tweet_id = tmct_child.tweet_id
-			where tmct_parent.child_tweet_id = $1
-			and tmct_parent.is_deleted = false
+			where tmct_parent.is_deleted = false
 		)
 		select 
-			a.username, a.complete_name, a.content, 
-			a.count_retweet, a.count_likes, a.count_replies
-		from anchestor a
+			id, username, complete_name, content, 
+			count_retweet, count_likes, count_replies
+		from anchestor;
 	`
 
 	args := []interface{}{
@@ -106,29 +106,30 @@ func (repo *tweetRepository) GetParentsDataByTweetId(ctx context.Context, param 
 			Errorln("error on query")
 	}
 
-	parent := extractGetParentsDataByTweetIdResult(queryContextResp, &domain.GetParentsDataByTweetIdResult_Parent{})
-	result.Parent = parent
+	for queryContextResp.Next() {
+		parent := domain.GetParentsDataByTweetIdResult_Parent{}
+		queryContextResp.Scan(
+			&parent.TweetId,
+			&parent.Username,
+			&parent.CompleteName,
+			&parent.Content,
+			&parent.CountRetweet,
+			&parent.CountLikes,
+			&parent.CountReplies,
+		)
+		result.Parent = append(result.Parent, parent)
+	}
+
+	finalSlicesOfParent := make([]domain.GetParentsDataByTweetIdResult_Parent, len(result.Parent))
+	for idx, _ := range result.Parent {
+		finalSlicesOfParent[idx] = result.Parent[len(result.Parent)-1-idx]
+	}
+
+	result.Parent = finalSlicesOfParent
 
 	repo.logger.
 		WithFields(logData).
 		Infoln("success on GetChildrenDataByTweetId")
 
 	return result, nil
-}
-
-func extractGetParentsDataByTweetIdResult(queryContextResp *sql.Rows, currentParent *domain.GetParentsDataByTweetIdResult_Parent) *domain.GetParentsDataByTweetIdResult_Parent {
-	if queryContextResp.Next() {
-		queryContextResp.Scan(
-			currentParent.Username,
-			currentParent.CompleteName,
-			currentParent.Content,
-			currentParent.CountRetweet,
-			currentParent.CountLikes,
-			currentParent.CountReplies,
-		)
-
-		return extractGetParentsDataByTweetIdResult(queryContextResp, currentParent.Parent)
-	} else {
-		return currentParent
-	}
 }
