@@ -22,11 +22,9 @@ func (repo *tweetRepository) UpsertLikes(ctx context.Context, param domain.Upser
 		values
 		($1, $2, false, $3)
 		on conflict (user_id, tweet_id)
-		do update likes
+		do update
 		set is_deleted = false,
 		updated_at = $3
-		where user_id = $1
-		and tweet_id = $2
 	`
 
 	argsQueryUpsertLikes := []interface{}{
