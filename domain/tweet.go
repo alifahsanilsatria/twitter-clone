@@ -5,9 +5,11 @@ import "context"
 type UndoLikesRequestPayload struct {
 	TweetId int32 `json:"tweet_id"`
 }
+
 type LikeTweetRequestPayload struct {
 	TweetId int32 `json:"tweet_id"`
 }
+
 type UndoRetweetRequestPayload struct {
 	TweetId int32 `json:"tweet_id"`
 }
@@ -72,6 +74,29 @@ type UndoLikesUsecaseParam struct {
 
 type UndoLikesUsecaseResult struct{}
 
+type SeeTweetDetailsUsecaseParam struct {
+	Token   string
+	TweetId int32
+}
+
+type SeeTweetDetailsUsecaseResult struct {
+	TweetDetails []SeeTweetDetailsUsecaseResult_TweetDetails
+}
+
+type SeeTweetDetailsUsecaseResult_TweetDetails struct {
+	TweetId      int32
+	Username     string
+	CompleteName string
+	Content      string
+	CountRetweet int32
+	CountLikes   int32
+	CountReplies int32
+
+	IsParentTweet  bool
+	IsCurrentTweet bool
+	IsChildTweet   bool
+}
+
 type TweetUsecase interface {
 	PublishTweet(ctx context.Context, param PublishTweetUsecaseParam) (PublishTweetUsecaseResult, error)
 	DeleteTweet(ctx context.Context, param DeleteTweetUsecaseParam) (DeleteTweetUsecaseResult, error)
@@ -79,6 +104,7 @@ type TweetUsecase interface {
 	UndoRetweet(ctx context.Context, param UndoRetweetUsecaseParam) (UndoRetweetUsecaseResult, error)
 	LikeTweet(ctx context.Context, param LikeTweetUsecaseParam) (LikeTweetUsecaseResult, error)
 	UndoLikes(ctx context.Context, param UndoLikesUsecaseParam) (UndoLikesUsecaseResult, error)
+	SeeTweetDetails(ctx context.Context, param SeeTweetDetailsUsecaseParam) (SeeTweetDetailsUsecaseResult, error)
 }
 
 type CreateNewTweetParam struct {
@@ -136,6 +162,56 @@ type DeleteLikesParam struct {
 
 type DeleteLikesResult struct{}
 
+type GetChildrenDataByTweetIdParam struct {
+	TweetId int32
+}
+
+type GetChildrenDataByTweetIdResult struct {
+	ChildTweet []GetChildrenDataByTweetIdResult_ChildTweet
+}
+
+type GetChildrenDataByTweetIdResult_ChildTweet struct {
+	TweetId      int32
+	Username     string
+	CompleteName string
+	Content      string
+	CountRetweet int32
+	CountLikes   int32
+	CountReplies int32
+}
+
+type GetParentsDataByTweetIdParam struct {
+	TweetId int32
+}
+
+type GetParentsDataByTweetIdResult struct {
+	Parent []GetParentsDataByTweetIdResult_Parent
+}
+
+type GetParentsDataByTweetIdResult_Parent struct {
+	TweetId      int32
+	Username     string
+	CompleteName string
+	Content      string
+	CountRetweet int32
+	CountLikes   int32
+	CountReplies int32
+}
+
+type GetTweetByIdParam struct {
+	TweetId int32
+}
+
+type GetTweetByIdResult struct {
+	TweetId      int32
+	Username     string
+	CompleteName string
+	Content      string
+	CountRetweet int32
+	CountLikes   int32
+	CountReplies int32
+}
+
 type TweetRepository interface {
 	CreateNewTweet(ctx context.Context, param CreateNewTweetParam) (CreateNewTweetResult, error)
 	GetTweetByIdAndUserId(ctx context.Context, param GetTweetByIdAndUserIdParam) (GetTweetByIdAndUserIdResult, error)
@@ -144,4 +220,7 @@ type TweetRepository interface {
 	DeleteRetweet(ctx context.Context, param DeleteRetweetParam) (DeleteRetweetResult, error)
 	UpsertLikes(ctx context.Context, param UpsertLikesParam) (UpsertLikesResult, error)
 	DeleteLikes(ctx context.Context, param DeleteLikesParam) (DeleteLikesResult, error)
+	GetChildrenDataByTweetId(ctx context.Context, param GetChildrenDataByTweetIdParam) (GetChildrenDataByTweetIdResult, error)
+	GetParentsDataByTweetId(ctx context.Context, param GetParentsDataByTweetIdParam) (GetParentsDataByTweetIdResult, error)
+	GetTweetById(ctx context.Context, param GetTweetByIdParam) (GetTweetByIdResult, error)
 }
