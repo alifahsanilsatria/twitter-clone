@@ -42,7 +42,7 @@ func (handler *userHandler) SignOut(echoCtx echo.Context) error {
 		handler.logger.
 			WithFields(logData).
 			WithError(errorSignOutUsecase).
-			Errorln("error when parsing request payload")
+			Errorln("error on SignOut")
 		return echoCtx.JSON(http.StatusInternalServerError, errorSignOutUsecase.Error())
 	}
 
