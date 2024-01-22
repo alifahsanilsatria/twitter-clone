@@ -62,7 +62,7 @@ func (handler *userHandler) SignUp(echoCtx echo.Context) error {
 		handler.logger.
 			WithFields(logData).
 			WithError(errorSignUpUsecase).
-			Errorln("error when parsing request payload")
+			Errorln("error when SignUp")
 		return echoCtx.JSON(http.StatusInternalServerError, errorSignUpUsecase.Error())
 	}
 
