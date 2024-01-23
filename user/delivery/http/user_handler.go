@@ -26,4 +26,5 @@ func NewUserHandler(
 	e.POST("/sign-out", handler.SignOut)
 	e.GET("/ping", handler.Ping)
 	e.GET("/profile", handler.SeeProfileDetails)
+	e.POST("/user-following", handler.FollowUser)
 }
