@@ -54,6 +54,10 @@ func (uc *userUsecase) FollowUser(ctx context.Context, param domain.FollowUserPa
 		return domain.FollowUserResult{}, errGetUserByUserId
 	}
 
+	if getUserByUserIdResult.UserId == 0 {
+		return domain.FollowUserResult{}, errors.New("user follow target doesn't exist or deleted")
+	}
+
 	upsertUserFollowingParam := domain.UpsertUserFollowingParam{
 		UserId:          userSession.UserId,
 		FollowingUserId: getUserByUserIdResult.UserId,
