@@ -79,6 +79,21 @@ type UnfollowUserResult struct {
 	Id int32
 }
 
+type GetListOfFollowingUsecaseParam struct {
+	Token  string
+	UserId int32
+}
+
+type GetListOfFollowingUsecaseResult struct {
+	Users []GetListOfFollowingUsecaseResult_User
+}
+
+type GetListOfFollowingUsecaseResult_User struct {
+	UserId       int32
+	Username     string
+	CompleteName string
+}
+
 type UserUsecase interface {
 	SignUp(ctx context.Context, param SignUpUsecaseParam) (SignUpResult, error)
 	SignIn(ctx context.Context, param SignInUsecaseParam) (SignInResult, error)
@@ -86,6 +101,7 @@ type UserUsecase interface {
 	SeeProfileDetails(ctx context.Context, param SeeProfileDetailsParam) (SeeProfileDetailsResult, error)
 	FollowUser(ctx context.Context, param FollowUserParam) (FollowUserResult, error)
 	UnfollowUser(ctx context.Context, param UnfollowUserParam) (UnfollowUserResult, error)
+	GetListOfFollowingUsecase(ctx context.Context, param GetListOfFollowingUsecaseParam) (GetListOfFollowingUsecaseResult, error)
 }
 
 type GetUserByUsernameOrEmailParam struct {
@@ -147,6 +163,20 @@ type DeleteUserFollowingResult struct {
 	Id int32
 }
 
+type GetListOfFollowingRepoParam struct {
+	UserId int32
+}
+
+type GetListOfFollowingRepoResult struct {
+	Users []GetListOfFollowingRepoResult_User
+}
+
+type GetListOfFollowingRepoResult_User struct {
+	UserId       int32
+	Username     string
+	CompleteName string
+}
+
 type UserRepository interface {
 	GetUserByUsernameOrEmail(ctx context.Context, param GetUserByUsernameOrEmailParam) (GetUserByUsernameOrEmailResult, error)
 	CreateNewUserAccount(ctx context.Context, param CreateNewUserAccountParam) (CreateNewUserAccountResult, error)
@@ -154,4 +184,5 @@ type UserRepository interface {
 	GetUserByUserId(ctx context.Context, param GetUserByUserIdParam) (GetUserByUserIdResult, error)
 	UpsertUserFollowing(ctx context.Context, param UpsertUserFollowingParam) (UpsertUserFollowingResult, error)
 	DeleteUserFollowing(ctx context.Context, param DeleteUserFollowingParam) (DeleteUserFollowingResult, error)
+	GetListOfFollowingRepo(ctx context.Context, param GetListOfFollowingRepoParam) (GetListOfFollowingRepoResult, error)
 }

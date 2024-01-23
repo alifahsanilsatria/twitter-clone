@@ -28,4 +28,5 @@ func NewUserHandler(
 	e.GET("/profile", handler.SeeProfileDetails)
 	e.POST("/follow", handler.FollowUser)
 	e.DELETE("/unfollow", handler.UnfollowUser)
+	e.GET("/:user_id/following/list", handler.GetListOfFollowingHandler)
 }
