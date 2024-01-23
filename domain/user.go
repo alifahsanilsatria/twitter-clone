@@ -4,6 +4,10 @@ import (
 	"context"
 )
 
+type FollowUserRequestPayload struct {
+	FollowingUserId int32 `json:"following_user_id"`
+}
+
 type SignUpRequestPayload struct {
 	Username     string `json:"username"`
 	Password     string `json:"password"`
@@ -54,11 +58,21 @@ type SeeProfileDetailsResult struct {
 	CreatedAt    string
 }
 
+type FollowUserParam struct {
+	Token           string
+	FollowingUserId int32
+}
+
+type FollowUserResult struct {
+	Id int32
+}
+
 type UserUsecase interface {
 	SignUp(ctx context.Context, param SignUpUsecaseParam) (SignUpResult, error)
 	SignIn(ctx context.Context, param SignInUsecaseParam) (SignInResult, error)
 	SignOut(ctx context.Context, param SignOutUsecaseParam) (SignOutResult, error)
 	SeeProfileDetails(ctx context.Context, param SeeProfileDetailsParam) (SeeProfileDetailsResult, error)
+	FollowUser(ctx context.Context, param FollowUserParam) (FollowUserResult, error)
 }
 
 type GetUserByUsernameOrEmailParam struct {
@@ -95,10 +109,20 @@ type GetUserByUserIdParam struct {
 }
 
 type GetUserByUserIdResult struct {
+	UserId       int32
 	Username     string
 	Email        string
 	CompleteName string
 	CreatedAt    string
+}
+
+type UpsertUserFollowingParam struct {
+	UserId          int32
+	FollowingUserId int32
+}
+
+type UpsertUserFollowingResult struct {
+	Id int32
 }
 
 type UserRepository interface {
@@ -106,4 +130,5 @@ type UserRepository interface {
 	CreateNewUserAccount(ctx context.Context, param CreateNewUserAccountParam) (CreateNewUserAccountResult, error)
 	GetUserByUsername(ctx context.Context, param GetUserByUsernameParam) (GetUserByUsernameResult, error)
 	GetUserByUserId(ctx context.Context, param GetUserByUserIdParam) (GetUserByUserIdResult, error)
+	UpsertUserFollowing(ctx context.Context, param UpsertUserFollowingParam) (UpsertUserFollowingResult, error)
 }

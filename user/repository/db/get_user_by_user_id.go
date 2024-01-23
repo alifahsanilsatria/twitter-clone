@@ -17,7 +17,7 @@ func (repo *userRepository) GetUserByUserId(ctx context.Context, param domain.Ge
 	}
 
 	query := `
-		select username, email, complete_name, created_at
+		select id, username, email, complete_name, created_at
 		from users u
 		where u.id = $1
 		and u.is_deleted = false
@@ -33,7 +33,7 @@ func (repo *userRepository) GetUserByUserId(ctx context.Context, param domain.Ge
 	queryRowContextResp := repo.db.QueryRowContext(ctx, query, args...)
 
 	response := domain.GetUserByUserIdResult{}
-	errScan := queryRowContextResp.Scan(&response.Username, &response.Email, &response.CompleteName, &response.CreatedAt)
+	errScan := queryRowContextResp.Scan(&response.UserId, &response.Username, &response.Email, &response.CompleteName, &response.CreatedAt)
 	if errScan != nil && errScan != sql.ErrNoRows {
 		logData["error_scan"] = errScan.Error()
 		repo.logger.
