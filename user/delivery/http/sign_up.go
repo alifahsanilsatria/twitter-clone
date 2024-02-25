@@ -8,21 +8,26 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/labstack/echo"
-
 	"github.com/alifahsanilsatria/twitter-clone/domain"
+	"github.com/labstack/echo"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (handler *userHandler) SignUp(echoCtx echo.Context) error {
+	ctx, span := handler.tracer.Start(context.Background(), "handler.SignUp",
+		trace.WithSpanKind(trace.SpanKindServer),
+	)
+
 	requestId := echoCtx.Request().Header.Get("Request-Id")
 
 	logData := logrus.Fields{
 		"method":     "userHandler.SignUp",
-		"request_id": echoCtx.Request().Header.Get("Request-Id"),
+		"request_id": requestId,
 	}
 
-	ctx := context.WithValue(context.Background(), "request_id", requestId)
+	ctx = context.WithValue(context.Background(), "request_id", requestId)
 
 	var reqPayload domain.SignUpRequestPayload
 	errParsingReqPayload := json.NewDecoder(echoCtx.Request().Body).Decode(&reqPayload)
@@ -32,8 +37,12 @@ func (handler *userHandler) SignUp(echoCtx echo.Context) error {
 			WithFields(logData).
 			WithError(errParsingReqPayload).
 			Errorln("error when parsing request payload")
+		span.End()
 		return echoCtx.JSON(http.StatusUnprocessableEntity, errParsingReqPayload.Error())
 	}
+
+	span.SetAttributes(attribute.String("request_id", requestId))
+	span.SetAttributes(attribute.String("request_payload", fmt.Sprintf("%+v", reqPayload)))
 
 	logData["request_payload"] = fmt.Sprintf("%+v", reqPayload)
 
@@ -44,6 +53,7 @@ func (handler *userHandler) SignUp(echoCtx echo.Context) error {
 			WithFields(logData).
 			WithError(errvalidateSignUpParam).
 			Errorln("error when validate sign up param")
+		span.End()
 		return echoCtx.JSON(http.StatusBadRequest, errvalidateSignUpParam.Error())
 	}
 
@@ -63,6 +73,7 @@ func (handler *userHandler) SignUp(echoCtx echo.Context) error {
 			WithFields(logData).
 			WithError(errorSignUpUsecase).
 			Errorln("error when parsing request payload")
+		span.End()
 		return echoCtx.JSON(http.StatusInternalServerError, errorSignUpUsecase.Error())
 	}
 
@@ -70,6 +81,7 @@ func (handler *userHandler) SignUp(echoCtx echo.Context) error {
 	handler.logger.
 		WithFields(logData).
 		Infoln("success sign up")
+	span.End()
 
 	return echoCtx.JSON(http.StatusOK, signUpUsecaseResult)
 }

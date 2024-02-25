@@ -8,9 +8,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (repo *tweetRepository) CreateNewTweet(ctx context.Context, param domain.CreateNewTweetParam) (domain.CreateNewTweetResult, error) {
+	ctx, span := repo.tracer.Start(ctx, "repository.CreateNewTweet", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "tweetRepository.CreateNewTweet",
 		"request_id": ctx.Value("request_id"),
@@ -31,6 +37,7 @@ func (repo *tweetRepository) CreateNewTweet(ctx context.Context, param domain.Cr
 				WithFields(logData).
 				WithError(errQuery).
 				Errorln("error on insert query")
+			span.End()
 			return domain.CreateNewTweetResult{}, errQuery
 		}
 	} else {
@@ -42,6 +49,7 @@ func (repo *tweetRepository) CreateNewTweet(ctx context.Context, param domain.Cr
 				WithFields(logData).
 				WithError(errQuery).
 				Errorln("error on insert query")
+			span.End()
 			return domain.CreateNewTweetResult{}, errQuery
 		}
 	}
@@ -49,6 +57,7 @@ func (repo *tweetRepository) CreateNewTweet(ctx context.Context, param domain.Cr
 	repo.logger.
 		WithFields(logData).
 		Infoln("success CreateNewTweet")
+	span.End()
 
 	return result, nil
 }

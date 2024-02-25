@@ -8,11 +8,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/labstack/echo"
-
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (handler *userHandler) SignOut(echoCtx echo.Context) error {
+	ctx, span := handler.tracer.Start(context.Background(), "handler.SignOut",
+		trace.WithSpanKind(trace.SpanKindServer),
+	)
+
 	requestId := echoCtx.Request().Header.Get("Request-Id")
 
 	logData := logrus.Fields{
@@ -20,11 +24,12 @@ func (handler *userHandler) SignOut(echoCtx echo.Context) error {
 		"request_id": requestId,
 	}
 
-	ctx := context.WithValue(context.Background(), "request_id", requestId)
+	ctx = context.WithValue(context.Background(), "request_id", requestId)
 
 	token := echoCtx.Request().Header.Get("Token")
 
 	if token == "" {
+		span.End()
 		return echoCtx.JSON(http.StatusBadRequest, errors.New("empty token"))
 	}
 
@@ -43,6 +48,7 @@ func (handler *userHandler) SignOut(echoCtx echo.Context) error {
 			WithFields(logData).
 			WithError(errorSignOutUsecase).
 			Errorln("error when parsing request payload")
+		span.End()
 		return echoCtx.JSON(http.StatusInternalServerError, errorSignOutUsecase.Error())
 	}
 
@@ -50,6 +56,7 @@ func (handler *userHandler) SignOut(echoCtx echo.Context) error {
 	handler.logger.
 		WithFields(logData).
 		Infoln("success sign out")
+	span.End()
 
 	return echoCtx.JSON(http.StatusOK, signOutUsecaseResult)
 }

@@ -8,6 +8,12 @@ import (
 	"net/http"
 	"os"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/zipkin"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo"
 
@@ -33,6 +39,7 @@ func init() {
 
 func main() {
 	logger := logrus.StandardLogger()
+	zipkinLogger := log.New(os.Stderr, "twitter-clone", log.Ldate|log.Ltime|log.Llongfile)
 
 	// Log as JSON instead of the default ASCII formatter.
 	logrus.SetFormatter(&logrus.JSONFormatter{})
@@ -64,20 +71,27 @@ func main() {
 
 	redisConn := createRedisConnectionInstance()
 
+	tracerProvider, err := initTracer(common.GetString("ZIPKIN_URL", ""), zipkinLogger)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	e := echo.New()
 
 	userMiddleWare := userMiddleware.InitMiddleware()
 	e.Use(userMiddleWare.RequestId)
 
-	userRepository := userDBRepository.NewUserRepository(sqlConn, logger)
-	userSessionRepository := userSessionRedisRepository.NewUserSessionRepository(redisConn, logger)
+	trace := tracerProvider.Tracer("twitter-clone")
 
-	userUsecase := userUsecase.NewUserUsecase(userRepository, userSessionRepository, logger)
-	userHandler.NewUserHandler(e, userUsecase, logger)
+	userRepository := userDBRepository.NewUserRepository(sqlConn, logger, trace)
+	userSessionRepository := userSessionRedisRepository.NewUserSessionRepository(redisConn, logger, trace)
 
-	tweetRepository := tweetDBRepository.NewTweetRepository(sqlConn, sqlTxConn, logger)
-	tweetUsecase := tweetUsecase.NewTweetUsecase(tweetRepository, userSessionRepository, logger)
-	tweetHandler.NewTweetHandler(e, tweetUsecase, logger)
+	userUsecase := userUsecase.NewUserUsecase(userRepository, userSessionRepository, logger, trace)
+	userHandler.NewUserHandler(e, userUsecase, logger, trace)
+
+	tweetRepository := tweetDBRepository.NewTweetRepository(sqlConn, sqlTxConn, logger, trace)
+	tweetUsecase := tweetUsecase.NewTweetUsecase(tweetRepository, userSessionRepository, logger, trace)
+	tweetHandler.NewTweetHandler(e, tweetUsecase, logger, trace)
 
 	serviceAddress := common.GetString("TWITTER_CLONE_ADDRESS", "")
 
@@ -122,4 +136,33 @@ func createRedisConnectionInstance() *redis.Client {
 	})
 
 	return client
+}
+
+// initTracer creates a new trace provider instance and registers it as global trace provider.
+func initTracer(url string, zipkinLogger *log.Logger) (*sdktrace.TracerProvider, error) {
+	// Create Zipkin Exporter and install it as a global tracer.
+	//
+	// For demoing purposes, always sample. In a production application, you should
+	// configure the sampler to a trace.ParentBased(trace.TraceIDRatioBased) set at the desired
+	// ratio.
+	exporter, err := zipkin.New(
+		url,
+		zipkin.WithLogger(zipkinLogger),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	batcher := sdktrace.NewBatchSpanProcessor(exporter)
+
+	tracerProvider := sdktrace.NewTracerProvider(
+		sdktrace.WithSpanProcessor(batcher),
+		sdktrace.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceName("twitter-clone"),
+		)),
+	)
+	otel.SetTracerProvider(tracerProvider)
+
+	return tracerProvider, nil
 }

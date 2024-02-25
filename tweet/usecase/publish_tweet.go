@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (uc *tweetUsecase) PublishTweet(ctx context.Context, param domain.PublishTweetUsecaseParam) (domain.PublishTweetUsecaseResult, error) {
+	ctx, span := uc.tracer.Start(ctx, "usecase.PublishTweet", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "tweetUsecase.PublishTweet",
 		"request_id": ctx.Value("request_id"),
@@ -29,12 +35,14 @@ func (uc *tweetUsecase) PublishTweet(ctx context.Context, param domain.PublishTw
 			WithFields(logData).
 			WithError(errGetUserSession).
 			Errorln("error on GetUserSessionByToken")
+		span.End()
 		return domain.PublishTweetUsecaseResult{}, errGetUserSession
 	}
 
 	logData["get_user_session_by_token_result"] = fmt.Sprintf("%+v", userSession)
 
 	if userSession.UserId == 0 {
+		span.End()
 		return domain.PublishTweetUsecaseResult{}, errors.New("invalid or expired token")
 	}
 
@@ -53,6 +61,7 @@ func (uc *tweetUsecase) PublishTweet(ctx context.Context, param domain.PublishTw
 			WithFields(logData).
 			WithError(errCreateNewTweet).
 			Errorln("error on CreateNewTweet")
+		span.End()
 		return domain.PublishTweetUsecaseResult{}, errCreateNewTweet
 	}
 
@@ -65,5 +74,6 @@ func (uc *tweetUsecase) PublishTweet(ctx context.Context, param domain.PublishTw
 		TweetId: createNewTweetResult.TweetId,
 	}
 
+	span.End()
 	return publishTweetResult, nil
 }

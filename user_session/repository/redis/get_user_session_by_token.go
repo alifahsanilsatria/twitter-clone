@@ -8,9 +8,15 @@ import (
 	"github.com/alifahsanilsatria/twitter-clone/common/constants"
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (repo *userSessionRepository) GetUserSessionByToken(ctx context.Context, param domain.GetUserSessionByTokenParam) (domain.GetUserSessionByTokenResult, error) {
+	ctx, span := repo.tracer.Start(ctx, "repository.GetUserSessionByToken", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method": "userSessionRepository.GetUserSessionByToken",
 		"param":  fmt.Sprintf("%+v", param),
@@ -26,6 +32,7 @@ func (repo *userSessionRepository) GetUserSessionByToken(ctx context.Context, pa
 			WithFields(logData).
 			WithError(errGetRedis).
 			Errorln("error on get")
+		span.End()
 		return domain.GetUserSessionByTokenResult{}, errGetRedis
 	}
 
@@ -37,8 +44,10 @@ func (repo *userSessionRepository) GetUserSessionByToken(ctx context.Context, pa
 			WithFields(logData).
 			WithError(errUnmarshal).
 			Errorln("error on unmarshal")
+		span.End()
 		return domain.GetUserSessionByTokenResult{}, errGetRedis
 	}
+	span.End()
 
 	return result, nil
 }

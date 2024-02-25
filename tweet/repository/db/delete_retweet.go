@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (repo *tweetRepository) DeleteRetweet(ctx context.Context, param domain.DeleteRetweetParam) (domain.DeleteRetweetResult, error) {
+	ctx, span := repo.tracer.Start(ctx, "repository.DeleteRetweet", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "tweetRepository.DeleteRetweet",
 		"request_id": ctx.Value("request_id"),
@@ -40,10 +46,11 @@ func (repo *tweetRepository) DeleteRetweet(ctx context.Context, param domain.Del
 			WithFields(logData).
 			WithError(errDeleteRetweetQuery).
 			Errorln("error on update query")
+		span.End()
 		return domain.DeleteRetweetResult{}, errDeleteRetweetQuery
 	}
 
 	result := domain.DeleteRetweetResult{}
-
+	span.End()
 	return result, nil
 }

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,9 +11,16 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (handler *tweetHandler) DeleteTweet(echoCtx echo.Context) error {
+	ctx, span := handler.tracer.Start(context.Background(), "handler.DeleteTweet",
+		trace.WithSpanKind(trace.SpanKindServer),
+	)
+
 	requestId := echoCtx.Request().Header.Get("Request-Id")
 
 	logData := logrus.Fields{
@@ -20,9 +28,12 @@ func (handler *tweetHandler) DeleteTweet(echoCtx echo.Context) error {
 		"request_id": requestId,
 	}
 
+	ctx = context.WithValue(context.Background(), "request_id", requestId)
+
 	token := echoCtx.Request().Header.Get("Token")
 
 	if token == "" {
+		span.End()
 		return echoCtx.JSON(http.StatusBadRequest, errors.New("empty token"))
 	}
 
@@ -39,9 +50,10 @@ func (handler *tweetHandler) DeleteTweet(echoCtx echo.Context) error {
 		return echoCtx.JSON(http.StatusUnprocessableEntity, errParsingReqPayload.Error())
 	}
 
-	logData["request_payload"] = fmt.Sprintf("%+v", reqPayload)
+	span.SetAttributes(attribute.String("request_id", requestId))
+	span.SetAttributes(attribute.String("request_payload", fmt.Sprintf("%+v", reqPayload)))
 
-	ctx := echoCtx.Request().Context()
+	logData["request_payload"] = fmt.Sprintf("%+v", reqPayload)
 
 	deleteTweetUsecaseParam := domain.DeleteTweetUsecaseParam{
 		Token:   token,
@@ -57,6 +69,7 @@ func (handler *tweetHandler) DeleteTweet(echoCtx echo.Context) error {
 			WithFields(logData).
 			WithError(errDeleteTweetUsecase).
 			Errorln("error call usecase DeleteTweet")
+		span.End()
 		return echoCtx.JSON(http.StatusInternalServerError, errDeleteTweetUsecase.Error())
 	}
 
@@ -64,6 +77,8 @@ func (handler *tweetHandler) DeleteTweet(echoCtx echo.Context) error {
 	handler.logger.
 		WithFields(logData).
 		Infoln("success delete tweet")
+
+	span.End()
 
 	return echoCtx.JSON(http.StatusOK, deleteTweetUsecaseResult)
 }

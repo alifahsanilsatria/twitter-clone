@@ -9,9 +9,15 @@ import (
 	"github.com/alifahsanilsatria/twitter-clone/common"
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (uc *userUsecase) SignUp(ctx context.Context, param domain.SignUpUsecaseParam) (domain.SignUpResult, error) {
+	ctx, span := uc.tracer.Start(ctx, "usecase.SignUp", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "userUsecase.SignUp",
 		"request_id": ctx.Value("request_id"),
@@ -32,6 +38,7 @@ func (uc *userUsecase) SignUp(ctx context.Context, param domain.SignUpUsecasePar
 			WithFields(logData).
 			WithError(errGetUserByUsernameOrEmail).
 			Errorln("error on GetUserByUsernameOrEmail")
+		span.End()
 		return domain.SignUpResult{}, errGetUserByUsernameOrEmail
 	}
 
@@ -39,6 +46,7 @@ func (uc *userUsecase) SignUp(ctx context.Context, param domain.SignUpUsecasePar
 
 	if getUserByUsernameOrEmailResp.Id > 0 {
 		err := errors.New("username or email already exists")
+		span.End()
 		return domain.SignUpResult{}, err
 	}
 
@@ -49,6 +57,7 @@ func (uc *userUsecase) SignUp(ctx context.Context, param domain.SignUpUsecasePar
 			WithFields(logData).
 			WithError(errHashPassword).
 			Errorln("error on HashPassword")
+		span.End()
 		return domain.SignUpResult{}, errHashPassword
 	}
 
@@ -69,6 +78,7 @@ func (uc *userUsecase) SignUp(ctx context.Context, param domain.SignUpUsecasePar
 			WithFields(logData).
 			WithError(errCreateNewUserAccount).
 			Errorln("error on CreateNewUserAccount")
+		span.End()
 		return domain.SignUpResult{}, errCreateNewUserAccount
 	}
 
@@ -81,6 +91,8 @@ func (uc *userUsecase) SignUp(ctx context.Context, param domain.SignUpUsecasePar
 	response := domain.SignUpResult{
 		Id: createNewUserAccountResp.Id,
 	}
+
+	span.End()
 
 	return response, nil
 

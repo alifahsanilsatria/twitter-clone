@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (repo *tweetRepository) GetTweetByIdAndUserId(ctx context.Context, param domain.GetTweetByIdAndUserIdParam) (domain.GetTweetByIdAndUserIdResult, error) {
+	ctx, span := repo.tracer.Start(ctx, "repository.GetTweetByIdAndUserId", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method": "tweetRepository.GetTweetByIdAndUserId",
 		"param":  fmt.Sprintf("%+v", param),
@@ -38,12 +44,14 @@ func (repo *tweetRepository) GetTweetByIdAndUserId(ctx context.Context, param do
 			WithFields(logData).
 			WithError(errScan).
 			Errorln("error on scan")
+		span.End()
 		return response, errScan
 	}
 
 	repo.logger.
 		WithFields(logData).
 		Infoln("success on GetTweetByIdAndUserId")
+	span.End()
 
 	return response, nil
 }

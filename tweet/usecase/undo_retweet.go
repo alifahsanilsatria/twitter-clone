@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (uc *tweetUsecase) UndoRetweet(ctx context.Context, param domain.UndoRetweetUsecaseParam) (domain.UndoRetweetUsecaseResult, error) {
+	ctx, span := uc.tracer.Start(ctx, "usecase.UndoRetweet", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "tweetUsecase.UndoRetweet",
 		"request_id": ctx.Value("request_id"),
@@ -29,12 +35,14 @@ func (uc *tweetUsecase) UndoRetweet(ctx context.Context, param domain.UndoRetwee
 			WithFields(logData).
 			WithError(errGetUserSession).
 			Errorln("error on GetUserSessionByToken")
+		span.End()
 		return domain.UndoRetweetUsecaseResult{}, errGetUserSession
 	}
 
 	logData["get_user_session_by_token_result"] = fmt.Sprintf("%+v", userSession)
 
 	if userSession.UserId == 0 {
+		span.End()
 		return domain.UndoRetweetUsecaseResult{}, errors.New("invalid or expired token")
 	}
 
@@ -50,6 +58,7 @@ func (uc *tweetUsecase) UndoRetweet(ctx context.Context, param domain.UndoRetwee
 			WithFields(logData).
 			WithError(errDeleteRetweet).
 			Errorln("error on DeleteRetweet")
+		span.End()
 		return domain.UndoRetweetUsecaseResult{}, errDeleteRetweet
 	}
 
@@ -57,6 +66,8 @@ func (uc *tweetUsecase) UndoRetweet(ctx context.Context, param domain.UndoRetwee
 	uc.logger.
 		WithFields(logData).
 		Infoln("success delete retweet")
+
+	span.End()
 
 	result := domain.UndoRetweetUsecaseResult{}
 	return result, nil

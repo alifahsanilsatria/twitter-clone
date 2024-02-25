@@ -57,6 +57,13 @@ services:
     env_file:
       - .env
 
+  zipkin-collector:
+    image: openzipkin/zipkin-slim:latest
+    ports:
+      - "9411:9411"
+    networks:
+      - twitter_network
+
 networks:
   twitter_network:
     

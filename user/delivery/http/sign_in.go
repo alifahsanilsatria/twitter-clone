@@ -11,9 +11,14 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (handler *userHandler) SignIn(echoCtx echo.Context) error {
+	ctx, span := handler.tracer.Start(context.Background(), "handler.SignIn",
+		trace.WithSpanKind(trace.SpanKindServer),
+	)
+
 	requestId := echoCtx.Request().Header.Get("Request-Id")
 
 	logData := logrus.Fields{
@@ -21,7 +26,7 @@ func (handler *userHandler) SignIn(echoCtx echo.Context) error {
 		"request_id": requestId,
 	}
 
-	ctx := context.WithValue(context.Background(), "request_id", requestId)
+	ctx = context.WithValue(context.Background(), "request_id", requestId)
 
 	var reqPayload domain.SignInRequestPayload
 	errParsingReqPayload := json.NewDecoder(echoCtx.Request().Body).Decode(&reqPayload)
@@ -31,6 +36,7 @@ func (handler *userHandler) SignIn(echoCtx echo.Context) error {
 			WithFields(logData).
 			WithError(errParsingReqPayload).
 			Errorln("error when parsing request payload")
+		span.End()
 		return echoCtx.JSON(http.StatusUnprocessableEntity, errParsingReqPayload.Error())
 	}
 
@@ -43,6 +49,7 @@ func (handler *userHandler) SignIn(echoCtx echo.Context) error {
 			WithFields(logData).
 			WithError(errvalidateSignInParam).
 			Errorln("error when validate sign in param")
+		span.End()
 		return echoCtx.JSON(http.StatusBadRequest, errvalidateSignInParam.Error())
 	}
 
@@ -60,6 +67,7 @@ func (handler *userHandler) SignIn(echoCtx echo.Context) error {
 			WithFields(logData).
 			WithError(errorSignInUsecase).
 			Errorln("error when sign in")
+		span.End()
 		return echoCtx.JSON(http.StatusInternalServerError, errorSignInUsecase.Error())
 	}
 
@@ -67,6 +75,7 @@ func (handler *userHandler) SignIn(echoCtx echo.Context) error {
 	handler.logger.
 		WithFields(logData).
 		Infoln("success sign in")
+	span.End()
 
 	return echoCtx.JSON(http.StatusOK, signInUsecaseResult)
 }
