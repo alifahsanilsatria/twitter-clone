@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (repo *userRepository) UpsertUserFollowing(ctx context.Context, param domain.UpsertUserFollowingParam) (domain.UpsertUserFollowingResult, error) {
+	ctx, span := repo.tracer.Start(ctx, "repository.UpsertUserFollowing", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "userRepository.UpsertUserFollowing",
 		"request_id": ctx.Value("request_id"),
@@ -50,12 +56,14 @@ func (repo *userRepository) UpsertUserFollowing(ctx context.Context, param domai
 			WithFields(logData).
 			WithError(errScan).
 			Errorln("error on upsert query")
+		span.End()
 		return domain.UpsertUserFollowingResult{}, errScan
 	}
 
 	repo.logger.
 		WithFields(logData).
 		Infoln("success UpsertUserFollowing")
+	span.End()
 
 	return domain.UpsertUserFollowingResult{}, nil
 }

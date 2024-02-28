@@ -26,7 +26,7 @@ func (handler *userHandler) SignIn(echoCtx echo.Context) error {
 		"request_id": requestId,
 	}
 
-	ctx = context.WithValue(context.Background(), "request_id", requestId)
+	ctx = context.WithValue(ctx, "request_id", requestId)
 
 	var reqPayload domain.SignInRequestPayload
 	errParsingReqPayload := json.NewDecoder(echoCtx.Request().Body).Decode(&reqPayload)

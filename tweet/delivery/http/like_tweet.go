@@ -28,7 +28,7 @@ func (handler *tweetHandler) LikeTweet(echoCtx echo.Context) error {
 		"request_id": requestId,
 	}
 
-	ctx = context.WithValue(context.Background(), "request_id", requestId)
+	ctx = context.WithValue(ctx, "request_id", requestId)
 
 	token := echoCtx.Request().Header.Get("Token")
 

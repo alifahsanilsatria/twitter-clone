@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (uc *userUsecase) UnfollowUser(ctx context.Context, param domain.UnfollowUserParam) (domain.UnfollowUserResult, error) {
+	ctx, span := uc.tracer.Start(ctx, "usecase.UnfollowUser", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "userUsecase.UnfollowUser",
 		"request_id": ctx.Value("request_id"),
@@ -29,12 +35,14 @@ func (uc *userUsecase) UnfollowUser(ctx context.Context, param domain.UnfollowUs
 			WithFields(logData).
 			WithError(errGetUserSession).
 			Errorln("error on GetUserSessionByToken")
+		span.End()
 		return domain.UnfollowUserResult{}, errGetUserSession
 	}
 
 	logData["get_user_session_by_token_result"] = fmt.Sprintf("%+v", userSession)
 
 	if userSession.UserId == 0 {
+		span.End()
 		return domain.UnfollowUserResult{}, errors.New("invalid or expired token")
 	}
 
@@ -52,6 +60,7 @@ func (uc *userUsecase) UnfollowUser(ctx context.Context, param domain.UnfollowUs
 			WithFields(logData).
 			WithError(errDeleteUserFollowing).
 			Errorln("error on DeleteUserFollowing")
+		span.End()
 		return domain.UnfollowUserResult{}, errDeleteUserFollowing
 	}
 
@@ -64,6 +73,8 @@ func (uc *userUsecase) UnfollowUser(ctx context.Context, param domain.UnfollowUs
 	response := domain.UnfollowUserResult{
 		Id: deleteUserFollowingResult.Id,
 	}
+
+	span.End()
 
 	return response, nil
 

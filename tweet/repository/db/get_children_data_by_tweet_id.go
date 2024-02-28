@@ -6,9 +6,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (repo *tweetRepository) GetChildrenDataByTweetId(ctx context.Context, param domain.GetChildrenDataByTweetIdParam) (domain.GetChildrenDataByTweetIdResult, error) {
+	ctx, span := repo.tracer.Start(ctx, "repository.GetChildrenDataByTweetId", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method": "tweetRepository.GetChildrenDataByTweetId",
 		"param":  fmt.Sprintf("%+v", param),
@@ -64,6 +70,7 @@ func (repo *tweetRepository) GetChildrenDataByTweetId(ctx context.Context, param
 			WithFields(logData).
 			WithError(errQuery).
 			Errorln("error on query")
+		span.End()
 	}
 
 	for queryContextResp.Next() {
@@ -83,6 +90,7 @@ func (repo *tweetRepository) GetChildrenDataByTweetId(ctx context.Context, param
 	repo.logger.
 		WithFields(logData).
 		Infoln("success on GetChildrenDataByTweetId")
+	span.End()
 
 	return result, nil
 }

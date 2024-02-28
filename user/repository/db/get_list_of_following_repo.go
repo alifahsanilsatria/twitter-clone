@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (repo *userRepository) GetListOfFollowingRepo(ctx context.Context, param domain.GetListOfFollowingRepoParam) (domain.GetListOfFollowingRepoResult, error) {
+	ctx, span := repo.tracer.Start(ctx, "repository.GetListOfFollowingRepo", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "userRepository.GetListOfFollowingRepo",
 		"request_id": ctx.Value("request_id"),
@@ -43,6 +49,7 @@ func (repo *userRepository) GetListOfFollowingRepo(ctx context.Context, param do
 			WithFields(logData).
 			WithError(errQueryContext).
 			Errorln("error on querycontext")
+		span.End()
 		return result, errQueryContext
 	}
 
@@ -55,6 +62,7 @@ func (repo *userRepository) GetListOfFollowingRepo(ctx context.Context, param do
 				WithFields(logData).
 				WithError(errScan).
 				Errorln("error on scan")
+			span.End()
 			return result, errScan
 		}
 		result.Users = append(result.Users, user)
@@ -64,6 +72,7 @@ func (repo *userRepository) GetListOfFollowingRepo(ctx context.Context, param do
 	repo.logger.
 		WithFields(logData).
 		Infoln("success GetListOfFollowingRepo")
+	span.End()
 
 	return result, nil
 }

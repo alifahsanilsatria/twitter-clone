@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (repo *userRepository) DeleteUserFollowing(ctx context.Context, param domain.DeleteUserFollowingParam) (domain.DeleteUserFollowingResult, error) {
+	ctx, span := repo.tracer.Start(ctx, "repository.DeleteUserFollowing", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "userRepository.DeleteUserFollowing",
 		"request_id": ctx.Value("request_id"),
@@ -47,12 +53,14 @@ func (repo *userRepository) DeleteUserFollowing(ctx context.Context, param domai
 			WithFields(logData).
 			WithError(errScan).
 			Errorln("error on upsert query")
+		span.End()
 		return domain.DeleteUserFollowingResult{}, errScan
 	}
 
 	repo.logger.
 		WithFields(logData).
 		Infoln("success DeleteUserFollowingResult")
+	span.End()
 
 	return domain.DeleteUserFollowingResult{}, nil
 }

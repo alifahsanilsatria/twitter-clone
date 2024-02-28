@@ -9,11 +9,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/labstack/echo"
-
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (handler *userHandler) GetListOfFollowersHandler(echoCtx echo.Context) error {
+	ctx, span := handler.tracer.Start(context.Background(), "handler.GetListOfFollowersHandler",
+		trace.WithSpanKind(trace.SpanKindServer),
+	)
+
 	requestId := echoCtx.Request().Header.Get("Request-Id")
 
 	logData := logrus.Fields{
@@ -21,11 +25,12 @@ func (handler *userHandler) GetListOfFollowersHandler(echoCtx echo.Context) erro
 		"request_id": requestId,
 	}
 
-	ctx := context.WithValue(context.Background(), "request_id", requestId)
+	ctx = context.WithValue(ctx, "request_id", requestId)
 
 	token := echoCtx.Request().Header.Get("Token")
 
 	if token == "" {
+		span.End()
 		return echoCtx.JSON(http.StatusBadRequest, errors.New("empty token"))
 	}
 
@@ -34,6 +39,7 @@ func (handler *userHandler) GetListOfFollowersHandler(echoCtx echo.Context) erro
 	userIdStr := echoCtx.Param("user_id")
 	userId, errParseInt := strconv.ParseInt(userIdStr, 10, 32)
 	if errParseInt != nil {
+		span.End()
 		return echoCtx.JSON(http.StatusBadRequest, errors.New("invalid tweet id"))
 	}
 
@@ -51,6 +57,7 @@ func (handler *userHandler) GetListOfFollowersHandler(echoCtx echo.Context) erro
 			WithFields(logData).
 			WithError(errListOfFollowersUsecase).
 			Errorln("error on GetListOfFollowersUsecase")
+		span.End()
 		return echoCtx.JSON(http.StatusInternalServerError, errListOfFollowersUsecase.Error())
 	}
 
@@ -58,6 +65,7 @@ func (handler *userHandler) GetListOfFollowersHandler(echoCtx echo.Context) erro
 	handler.logger.
 		WithFields(logData).
 		Infoln("success get list of followers")
+	span.End()
 
 	return echoCtx.JSON(http.StatusOK, getListOfFollowersUsecaseResult)
 }

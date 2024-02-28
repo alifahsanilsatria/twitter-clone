@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (uc *userUsecase) SeeProfileDetails(ctx context.Context, param domain.SeeProfileDetailsParam) (domain.SeeProfileDetailsResult, error) {
+	ctx, span := uc.tracer.Start(ctx, "usecase.SeeProfileDetails", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "userUsecase.SeeProfileDetails",
 		"request_id": ctx.Value("request_id"),
@@ -29,12 +35,14 @@ func (uc *userUsecase) SeeProfileDetails(ctx context.Context, param domain.SeePr
 			WithFields(logData).
 			WithError(errGetUserSession).
 			Errorln("error on GetUserSessionByToken")
+		span.End()
 		return domain.SeeProfileDetailsResult{}, errGetUserSession
 	}
 
 	logData["get_user_session_by_token_result"] = fmt.Sprintf("%+v", userSession)
 
 	if userSession.UserId == 0 {
+		span.End()
 		return domain.SeeProfileDetailsResult{}, errors.New("invalid or expired token")
 	}
 
@@ -51,6 +59,7 @@ func (uc *userUsecase) SeeProfileDetails(ctx context.Context, param domain.SeePr
 			WithFields(logData).
 			WithError(errGetUserByUserId).
 			Errorln("error on GetUserByUserId")
+		span.End()
 		return domain.SeeProfileDetailsResult{}, errGetUserByUserId
 	}
 
@@ -64,6 +73,7 @@ func (uc *userUsecase) SeeProfileDetails(ctx context.Context, param domain.SeePr
 	uc.logger.
 		WithFields(logData).
 		Infoln("success see profile details")
+	span.End()
 
 	return seeProfileDetailsUsecaseResult, nil
 }
