@@ -31,4 +31,5 @@ func NewTweetHandler(
 	e.DELETE("/retweet", handler.UndoRetweet)
 	e.POST("/likes", handler.LikeTweet)
 	e.DELETE("/likes", handler.UndoLikes)
+	e.GET("/tweet/:tweet_id", handler.SeeTweetDetails)
 }

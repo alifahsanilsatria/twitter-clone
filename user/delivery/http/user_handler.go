@@ -29,4 +29,9 @@ func NewUserHandler(
 	e.POST("/sign-in", handler.SignIn)
 	e.POST("/sign-out", handler.SignOut)
 	e.GET("/ping", handler.Ping)
+	e.GET("/profile", handler.SeeProfileDetails)
+	e.POST("/follow", handler.FollowUser)
+	e.DELETE("/unfollow", handler.UnfollowUser)
+	e.GET("/:user_id/following/list", handler.GetListOfFollowingHandler)
+	e.GET("/:user_id/followers/list", handler.GetListOfFollowersHandler)
 }
