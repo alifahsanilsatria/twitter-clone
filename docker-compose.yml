@@ -54,13 +54,36 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      zipkin-collector:
+        condition: service_healthy
     env_file:
       - .env
 
   zipkin-collector:
     image: openzipkin/zipkin-slim:latest
+    environment:
+      - STORAGE_TYPE=elasticsearch
+      # Point the zipkin at the storage backend
+      - ES_HOSTS=zipkin-elasticsearch:9200
+      # Uncomment to see requests to and from elasticsearch
+      - ES_HTTP_LOGGING=BODY
+       # Uncomment to increase heap size
+      - JAVA_OPTS=-Xms1024m -Xmx1024m -XX:+ExitOnOutOfMemoryError
     ports:
       - "9411:9411"
+    depends_on:
+      zipkin-elasticsearch:
+        condition: service_healthy
+    networks:
+      - twitter_network
+
+  zipkin-elasticsearch:
+    image: ghcr.io/openzipkin/zipkin-elasticsearch8:latest
+    volumes:
+      - esdata:/elasticsearch
+    # Uncomment to expose the storage port for testing
+    ports:    
+      - 9200:9200
     networks:
       - twitter_network
 
@@ -70,3 +93,4 @@ networks:
 volumes:
   pgdata:
   redisdata:
+  esdata:
