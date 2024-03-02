@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (uc *tweetUsecase) DeleteTweet(ctx context.Context, param domain.DeleteTweetUsecaseParam) (domain.DeleteTweetUsecaseResult, error) {
+	ctx, span := uc.tracer.Start(ctx, "usecase.DeleteTweet", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "tweetUsecase.DeleteTweet",
 		"request_id": ctx.Value("request_id"),
@@ -29,7 +35,13 @@ func (uc *tweetUsecase) DeleteTweet(ctx context.Context, param domain.DeleteTwee
 			WithFields(logData).
 			WithError(errGetUserSession).
 			Errorln("error on GetUserSessionByToken")
+		span.End()
 		return domain.DeleteTweetUsecaseResult{}, errGetUserSession
+	}
+
+	if userSession.UserId == 0 {
+		span.End()
+		return domain.DeleteTweetUsecaseResult{}, errors.New("invalid or expired token")
 	}
 
 	logData["get_user_session_by_token_result"] = fmt.Sprintf("%+v", userSession)
@@ -52,6 +64,7 @@ func (uc *tweetUsecase) DeleteTweet(ctx context.Context, param domain.DeleteTwee
 			WithFields(logData).
 			WithError(errGetTweetByIdAndUserId).
 			Errorln("error on GetTweetByIdAndUserId")
+		span.End()
 		return domain.DeleteTweetUsecaseResult{}, errGetTweetByIdAndUserId
 	}
 
@@ -74,6 +87,7 @@ func (uc *tweetUsecase) DeleteTweet(ctx context.Context, param domain.DeleteTwee
 			WithFields(logData).
 			WithError(errDeleteTweetById).
 			Errorln("error on DeleteTweetById")
+		span.End()
 		return domain.DeleteTweetUsecaseResult{}, errDeleteTweetById
 	}
 
@@ -85,6 +99,8 @@ func (uc *tweetUsecase) DeleteTweet(ctx context.Context, param domain.DeleteTwee
 	result := domain.DeleteTweetUsecaseResult{
 		TweetId: deleteTweetByIdResult.TweetId,
 	}
+
+	span.End()
 
 	return result, nil
 }

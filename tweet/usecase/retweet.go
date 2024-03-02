@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (uc *tweetUsecase) Retweet(ctx context.Context, param domain.RetweetUsecaseParam) (domain.RetweetUsecaseResult, error) {
+	ctx, span := uc.tracer.Start(ctx, "usecase.Retweet", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "tweetUsecase.Retweet",
 		"request_id": ctx.Value("request_id"),
@@ -29,12 +35,14 @@ func (uc *tweetUsecase) Retweet(ctx context.Context, param domain.RetweetUsecase
 			WithFields(logData).
 			WithError(errGetUserSession).
 			Errorln("error on GetUserSessionByToken")
+		span.End()
 		return domain.RetweetUsecaseResult{}, errGetUserSession
 	}
 
 	logData["get_user_session_by_token_result"] = fmt.Sprintf("%+v", userSession)
 
 	if userSession.UserId == 0 {
+		span.End()
 		return domain.RetweetUsecaseResult{}, errors.New("invalid or expired token")
 	}
 
@@ -52,6 +60,7 @@ func (uc *tweetUsecase) Retweet(ctx context.Context, param domain.RetweetUsecase
 			WithFields(logData).
 			WithError(errUpsertRetweet).
 			Errorln("error on UpsertRetweet")
+		span.End()
 		return domain.RetweetUsecaseResult{}, errUpsertRetweet
 	}
 
@@ -61,6 +70,8 @@ func (uc *tweetUsecase) Retweet(ctx context.Context, param domain.RetweetUsecase
 		Infoln("success upsert retweet")
 
 	retweetUsecaseResult := domain.RetweetUsecaseResult{}
+
+	span.End()
 
 	return retweetUsecaseResult, nil
 }

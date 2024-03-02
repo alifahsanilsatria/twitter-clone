@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (repo *userRepository) GetUserByUsername(ctx context.Context, param domain.GetUserByUsernameParam) (domain.GetUserByUsernameResult, error) {
+	ctx, span := repo.tracer.Start(ctx, "repository.GetUserByUsername", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "userRepository.GetUserByUsername",
 		"request_id": ctx.Value("request_id"),
@@ -35,6 +41,7 @@ func (repo *userRepository) GetUserByUsername(ctx context.Context, param domain.
 			WithFields(logData).
 			WithError(errScan).
 			Errorln("error on scan")
+		span.End()
 		return response, errScan
 	}
 
@@ -42,6 +49,7 @@ func (repo *userRepository) GetUserByUsername(ctx context.Context, param domain.
 	repo.logger.
 		WithFields(logData).
 		Infoln("success GetUserByUsername")
+	span.End()
 
 	return response, nil
 }

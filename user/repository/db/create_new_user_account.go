@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (repo *userRepository) CreateNewUserAccount(ctx context.Context, param domain.CreateNewUserAccountParam) (domain.CreateNewUserAccountResult, error) {
+	ctx, span := repo.tracer.Start(ctx, "repository.CreateNewUserAccount", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "userRepository.CreateNewUserAccount",
 		"request_id": ctx.Value("request_id"),
@@ -44,12 +50,14 @@ func (repo *userRepository) CreateNewUserAccount(ctx context.Context, param doma
 			WithFields(logData).
 			WithError(errQuery).
 			Errorln("error on insert query")
+		span.End()
 		return domain.CreateNewUserAccountResult{}, errQuery
 	}
 
 	repo.logger.
 		WithFields(logData).
 		Infoln("success CreateNewUserAccount")
+	span.End()
 
 	return domain.CreateNewUserAccountResult{}, nil
 }

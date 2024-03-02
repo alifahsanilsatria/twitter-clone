@@ -7,13 +7,18 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo"
-
 	"github.com/alifahsanilsatria/twitter-clone/domain"
+	"github.com/labstack/echo"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (handler *userHandler) UnfollowUser(echoCtx echo.Context) error {
+	ctx, span := handler.tracer.Start(context.Background(), "handler.UnfollowUser",
+		trace.WithSpanKind(trace.SpanKindServer),
+	)
+
 	requestId := echoCtx.Request().Header.Get("Request-Id")
 
 	logData := logrus.Fields{
@@ -21,11 +26,12 @@ func (handler *userHandler) UnfollowUser(echoCtx echo.Context) error {
 		"request_id": echoCtx.Request().Header.Get("Request-Id"),
 	}
 
-	ctx := context.WithValue(context.Background(), "request_id", requestId)
+	ctx = context.WithValue(ctx, "request_id", requestId)
 
 	token := echoCtx.Request().Header.Get("Token")
 
 	if token == "" {
+		span.End()
 		return echoCtx.JSON(http.StatusBadRequest, errors.New("empty token"))
 	}
 
@@ -39,8 +45,12 @@ func (handler *userHandler) UnfollowUser(echoCtx echo.Context) error {
 			WithFields(logData).
 			WithError(errParsingReqPayload).
 			Errorln("error when parsing request payload")
+		span.End()
 		return echoCtx.JSON(http.StatusUnprocessableEntity, errParsingReqPayload.Error())
 	}
+
+	span.SetAttributes(attribute.String("request_id", requestId))
+	span.SetAttributes(attribute.String("request_payload", fmt.Sprintf("%+v", reqPayload)))
 
 	logData["request_payload"] = fmt.Sprintf("%+v", reqPayload)
 
@@ -58,6 +68,7 @@ func (handler *userHandler) UnfollowUser(echoCtx echo.Context) error {
 			WithFields(logData).
 			WithError(errorUnfollowUserUsecase).
 			Errorln("error when unfollow user")
+		span.End()
 		return echoCtx.JSON(http.StatusInternalServerError, errorUnfollowUserUsecase.Error())
 	}
 
@@ -65,6 +76,7 @@ func (handler *userHandler) UnfollowUser(echoCtx echo.Context) error {
 	handler.logger.
 		WithFields(logData).
 		Infoln("success unfollow user")
+	span.End()
 
 	return echoCtx.JSON(http.StatusOK, unfollowUserUsecaseResult)
 }

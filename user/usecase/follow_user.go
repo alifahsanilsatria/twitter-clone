@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (uc *userUsecase) FollowUser(ctx context.Context, param domain.FollowUserParam) (domain.FollowUserResult, error) {
+	ctx, span := uc.tracer.Start(ctx, "usecase.FollowUser", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "userUsecase.FollowUser",
 		"request_id": ctx.Value("request_id"),
@@ -29,12 +35,14 @@ func (uc *userUsecase) FollowUser(ctx context.Context, param domain.FollowUserPa
 			WithFields(logData).
 			WithError(errGetUserSession).
 			Errorln("error on GetUserSessionByToken")
+		span.End()
 		return domain.FollowUserResult{}, errGetUserSession
 	}
 
 	logData["get_user_session_by_token_result"] = fmt.Sprintf("%+v", userSession)
 
 	if userSession.UserId == 0 {
+		span.End()
 		return domain.FollowUserResult{}, errors.New("invalid or expired token")
 	}
 
@@ -51,10 +59,12 @@ func (uc *userUsecase) FollowUser(ctx context.Context, param domain.FollowUserPa
 			WithFields(logData).
 			WithError(errGetUserByUserId).
 			Errorln("error on GetUserByUserId")
+		span.End()
 		return domain.FollowUserResult{}, errGetUserByUserId
 	}
 
 	if getUserByUserIdResult.UserId == 0 {
+		span.End()
 		return domain.FollowUserResult{}, errors.New("user follow target doesn't exist or deleted")
 	}
 
@@ -72,6 +82,7 @@ func (uc *userUsecase) FollowUser(ctx context.Context, param domain.FollowUserPa
 			WithFields(logData).
 			WithError(errUpsertUserFollowing).
 			Errorln("error on UpsertUserFollowing")
+		span.End()
 		return domain.FollowUserResult{}, errUpsertUserFollowing
 	}
 
@@ -84,6 +95,8 @@ func (uc *userUsecase) FollowUser(ctx context.Context, param domain.FollowUserPa
 	response := domain.FollowUserResult{
 		Id: upsertUserFollowingResult.Id,
 	}
+
+	span.End()
 
 	return response, nil
 

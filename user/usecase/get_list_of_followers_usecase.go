@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (uc *userUsecase) GetListOfFollowersUsecase(ctx context.Context, param domain.GetListOfFollowersUsecaseParam) (domain.GetListOfFollowersUsecaseResult, error) {
+	ctx, span := uc.tracer.Start(ctx, "usecase.GetListOfFollowersUsecase", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "userUsecase.GetListOfFollowersUsecase",
 		"request_id": ctx.Value("request_id"),
@@ -29,12 +35,14 @@ func (uc *userUsecase) GetListOfFollowersUsecase(ctx context.Context, param doma
 			WithFields(logData).
 			WithError(errGetUserSession).
 			Errorln("error on GetUserSessionByToken")
+		span.End()
 		return domain.GetListOfFollowersUsecaseResult{}, errGetUserSession
 	}
 
 	logData["get_user_session_by_token_result"] = fmt.Sprintf("%+v", userSession)
 
 	if userSession.UserId == 0 {
+		span.End()
 		return domain.GetListOfFollowersUsecaseResult{}, errors.New("invalid or expired token")
 	}
 
@@ -51,6 +59,7 @@ func (uc *userUsecase) GetListOfFollowersUsecase(ctx context.Context, param doma
 			WithFields(logData).
 			WithError(errGetListOfFollowersRepo).
 			Errorln("error on GetListOfFollowersRepo")
+		span.End()
 		return domain.GetListOfFollowersUsecaseResult{}, errGetListOfFollowersRepo
 	}
 
@@ -69,6 +78,7 @@ func (uc *userUsecase) GetListOfFollowersUsecase(ctx context.Context, param doma
 	uc.logger.
 		WithFields(logData).
 		Infoln("success get list of followers usecase")
+	span.End()
 
 	return getListOfFollowersUsecaseResult, nil
 }

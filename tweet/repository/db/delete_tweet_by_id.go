@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (repo *tweetRepository) DeleteTweetById(ctx context.Context, param domain.DeleteTweetByIdParam) (domain.DeleteTweetByIdResult, error) {
+	ctx, span := repo.tracer.Start(ctx, "repository.DeleteTweetById", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "tweetRepository.DeleteTweetById",
 		"request_id": ctx.Value("request_id"),
@@ -25,6 +31,7 @@ func (repo *tweetRepository) DeleteTweetById(ctx context.Context, param domain.D
 			WithFields(logData).
 			WithError(errQueryDeleteFromTweetTable).
 			Errorln("error on deleteFromTweetTableById")
+		span.End()
 		return domain.DeleteTweetByIdResult{}, errQueryDeleteFromTweetTable
 	}
 
@@ -35,6 +42,7 @@ func (repo *tweetRepository) DeleteTweetById(ctx context.Context, param domain.D
 			WithFields(logData).
 			WithError(errQueryDeleteTweetMapChildByChildTweetId).
 			Errorln("error on deleteFromTweetMapChildByChildTweetId")
+		span.End()
 		return domain.DeleteTweetByIdResult{}, errQueryDeleteTweetMapChildByChildTweetId
 	}
 
@@ -45,6 +53,7 @@ func (repo *tweetRepository) DeleteTweetById(ctx context.Context, param domain.D
 			WithFields(logData).
 			WithError(errCommit).
 			Errorln("error on deleteFromTweetMapChildByChildTweetId")
+		span.End()
 		return domain.DeleteTweetByIdResult{}, errCommit
 	}
 
@@ -55,6 +64,7 @@ func (repo *tweetRepository) DeleteTweetById(ctx context.Context, param domain.D
 	result := domain.DeleteTweetByIdResult{
 		TweetId: param.TweetId,
 	}
+	span.End()
 
 	return result, nil
 }

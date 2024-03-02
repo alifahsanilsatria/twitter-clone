@@ -8,11 +8,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/labstack/echo"
-
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (handler *userHandler) SeeProfileDetails(echoCtx echo.Context) error {
+	ctx, span := handler.tracer.Start(context.Background(), "handler.SeeProfileDetails",
+		trace.WithSpanKind(trace.SpanKindServer),
+	)
+
 	requestId := echoCtx.Request().Header.Get("Request-Id")
 
 	logData := logrus.Fields{
@@ -20,11 +24,12 @@ func (handler *userHandler) SeeProfileDetails(echoCtx echo.Context) error {
 		"request_id": requestId,
 	}
 
-	ctx := context.WithValue(context.Background(), "request_id", requestId)
+	ctx = context.WithValue(ctx, "request_id", requestId)
 
 	token := echoCtx.Request().Header.Get("Token")
 
 	if token == "" {
+		span.End()
 		return echoCtx.JSON(http.StatusBadRequest, errors.New("empty token"))
 	}
 
@@ -43,6 +48,7 @@ func (handler *userHandler) SeeProfileDetails(echoCtx echo.Context) error {
 			WithFields(logData).
 			WithError(errorSeeProfileDetailsUsecase).
 			Errorln("error on SeeProfileDetails")
+		span.End()
 		return echoCtx.JSON(http.StatusInternalServerError, errorSeeProfileDetailsUsecase.Error())
 	}
 
@@ -50,6 +56,7 @@ func (handler *userHandler) SeeProfileDetails(echoCtx echo.Context) error {
 	handler.logger.
 		WithFields(logData).
 		Infoln("success see profile details")
+	span.End()
 
 	return echoCtx.JSON(http.StatusOK, seeProfileDetailsUsecaseResult)
 }

@@ -9,10 +9,16 @@ import (
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func (uc *userUsecase) SignIn(ctx context.Context, param domain.SignInUsecaseParam) (domain.SignInResult, error) {
+	ctx, span := uc.tracer.Start(ctx, "usecase.SignIn", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "userUsecase.SignIn",
 		"request_id": ctx.Value("request_id"),
@@ -32,6 +38,7 @@ func (uc *userUsecase) SignIn(ctx context.Context, param domain.SignInUsecasePar
 			WithFields(logData).
 			WithError(errGetUserByUsername).
 			Errorln("error on GetUserByUsername")
+		span.End()
 		return domain.SignInResult{}, errGetUserByUsername
 	}
 
@@ -44,6 +51,7 @@ func (uc *userUsecase) SignIn(ctx context.Context, param domain.SignInUsecasePar
 			WithFields(logData).
 			WithError(errPasswordValidation).
 			Errorln("error on CompareHashAndPassword")
+		span.End()
 		return domain.SignInResult{}, errors.New("your username or password is wrong")
 	}
 
@@ -63,6 +71,7 @@ func (uc *userUsecase) SignIn(ctx context.Context, param domain.SignInUsecasePar
 			WithFields(logData).
 			WithError(errUpsertUserSession).
 			Errorln("error on UpsertUserSession")
+		span.End()
 		return domain.SignInResult{}, errUpsertUserSession
 	}
 
@@ -74,6 +83,7 @@ func (uc *userUsecase) SignIn(ctx context.Context, param domain.SignInUsecasePar
 		Token: token.String(),
 	}
 
+	span.End()
 	return result, nil
 
 }
