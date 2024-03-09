@@ -19,7 +19,6 @@ services:
       retries: 5
     restart: unless-stopped
 
-
   redis:
     image: redis:7.2
     container_name: redis
@@ -36,7 +35,6 @@ services:
       timeout: 2s
       retries: 10 
     restart: unless-stopped
-
 
   api-golang:
     image: api-golang
@@ -61,10 +59,11 @@ services:
 
   zipkin-collector:
     image: openzipkin/zipkin-slim:latest
+    container_name: zipkin-collector
     environment:
       - STORAGE_TYPE=elasticsearch
       # Point the zipkin at the storage backend
-      - ES_HOSTS=zipkin-elasticsearch:9200
+      - ES_HOSTS=http://zipkin-elasticsearch:9200
       # Uncomment to see requests to and from elasticsearch
       - ES_HTTP_LOGGING=BODY
        # Uncomment to increase heap size
@@ -79,18 +78,70 @@ services:
 
   zipkin-elasticsearch:
     image: ghcr.io/openzipkin/zipkin-elasticsearch8:latest
+    container_name: zipkin-elasticsearch
     volumes:
-      - esdata:/elasticsearch
-    # Uncomment to expose the storage port for testing
+      - distributed-tracing-elastic-data:/elasticsearch
     ports:    
-      - 9200:9200
+      - 9201:9200
     networks:
       - twitter_network
 
-networks:
-  twitter_network:
+  logstash-elasticsearch:
+    image: elasticsearch:7.17.18
+    container_name: elasticsearch
+    restart: always
+    volumes:
+      - distributed-log-elastic-data:/usr/share/elasticsearch/data/
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      discovery.type: single-node
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'Hello from elastic' || exit 1"]
+      interval: 1s
+      timeout: 2s
+      retries: 10 
+    ports:
+      - 9202:9200
+    networks:
+      - twitter_network
+
+  logstash:
+    image: logstash:7.16.2
+    container_name: logstash
+    restart: always
+    volumes:
+      - ./logstash/:/logstash
+      - /var/log:/var/log
+    command: logstash -f /logstash/logstash.conf
+    depends_on:
+      logstash-elasticsearch:
+        condition: service_healthy
+    ports:
+    - '9600:9600'
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m" 
+    networks:
+      - twitter_network
+
+  kibana:
+    image: kibana:7.16.2
+    container_name: kibana
+    restart: always       
+    ports:
+      - '5601:5601'
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      logstash-elasticsearch:
+        condition: service_healthy
+    networks:
+      - twitter_network
     
 volumes:
   pgdata:
   redisdata:
-  esdata:
+  distributed-tracing-elastic-data:
+  distributed-log-elastic-data:
+
+networks:
+  twitter_network:
