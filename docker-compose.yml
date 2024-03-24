@@ -18,6 +18,8 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    env_file:
+      - .env
 
   redis:
     image: redis:7.2
@@ -35,6 +37,8 @@ services:
       timeout: 2s
       retries: 10 
     restart: unless-stopped
+    env_file:
+      - .env
 
   api-golang:
     image: api-golang
@@ -58,33 +62,37 @@ services:
       - .env
 
   zipkin-collector:
-    image: openzipkin/zipkin-slim:latest
+    image: openzipkin/zipkin-slim:3
     container_name: zipkin-collector
     environment:
       - STORAGE_TYPE=elasticsearch
       # Point the zipkin at the storage backend
-      - ES_HOSTS=http://zipkin-elasticsearch:9200
+      - ES_HOSTS=${ZIPKIN_ES_HOSTS}
       # Uncomment to see requests to and from elasticsearch
       - ES_HTTP_LOGGING=BODY
        # Uncomment to increase heap size
       - JAVA_OPTS=-Xms1024m -Xmx1024m -XX:+ExitOnOutOfMemoryError
     ports:
-      - "9411:9411"
+      - "${ZIPKIN_COLLECTOR_PORT}:${ZIPKIN_COLLECTOR_PORT}"
     depends_on:
       zipkin-elasticsearch:
         condition: service_healthy
     networks:
       - twitter_network
+    env_file:
+      - .env
 
   zipkin-elasticsearch:
-    image: ghcr.io/openzipkin/zipkin-elasticsearch8:latest
+    image: ghcr.io/openzipkin/zipkin-elasticsearch8:3.1.1
     container_name: zipkin-elasticsearch
     volumes:
       - distributed-tracing-elastic-data:/elasticsearch
     ports:    
-      - 9201:9200
+      - ${ZIPKIN_ES_PORT_EXTERNAL}:${ZIPKIN_ES_PORT_INTERNAL}
     networks:
       - twitter_network
+    env_file:
+      - .env
 
   logstash-elasticsearch:
     image: elasticsearch:7.17.18
@@ -101,47 +109,115 @@ services:
       timeout: 2s
       retries: 10 
     ports:
-      - 9202:9200
+      - ${LOGSTASH_ES_PORT_EXTERNAL}:${LOGSTASH_ES_PORT_INTERNAL}
     networks:
       - twitter_network
+    env_file:
+      - .env
 
   logstash:
     image: logstash:7.16.2
     container_name: logstash
     restart: always
     volumes:
-      - ./logstash/:/logstash
-      - /var/log:/var/log
+      - distributed-log-logstash-conf:/logstash
+      - distributed-log-logstash-log:/var/log
     command: logstash -f /logstash/logstash.conf
     depends_on:
       logstash-elasticsearch:
         condition: service_healthy
     ports:
-    - '9600:9600'
+      - ${LOGSTASH_PORT}:${LOGSTASH_PORT}
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m" 
     networks:
       - twitter_network
+    env_file:
+      - .env
 
   kibana:
     image: kibana:7.16.2
     container_name: kibana
-    restart: always       
+    restart: always
+    volumes:
+      - distributed-log-kibana:/usr/share/kibana
     ports:
-      - '5601:5601'
+      - ${KIBANA_PORT}:${KIBANA_PORT}
     environment:
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_URL=${LOGSTASH_ES_HOST}
     depends_on:
       logstash-elasticsearch:
         condition: service_healthy
     networks:
       - twitter_network
+    env_file:
+      - .env
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: prometheus
+    ports:
+      - ${PROMETHEUS_PORT}:${PROMETHEUS_PORT}
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - apm-prometheus:/etc/prometheus:ro
+    depends_on:
+      - cadvisor
+    networks:
+      - twitter_network
+    env_file:
+      - .env
+  
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    ports:
+      - ${CADVISOR_PORT}:${CADVISOR_PORT}
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api-golang:
+        condition: service_started
+    networks:
+      - twitter_network
+    env_file:
+      - .env
+
+  grafana:
+    image: grafana/grafana-enterprise:10.3.5
+    container_name: grafana
+    restart: unless-stopped
+    # if you are running as root then set it to 0
+    # else find the right id with the id -u command
+    user: '0'
+    ports:
+      - ${GRAFANA_PORT}:${GRAFANA_PORT}
+    # adding the mount volume point which we create earlier
+    volumes:
+      - apm-grafana:/var/lib/grafana
+    networks:
+      - twitter_network
+    env_file:
+      - .env
     
 volumes:
   pgdata:
   redisdata:
   distributed-tracing-elastic-data:
   distributed-log-elastic-data:
+  distributed-log-logstash-conf:
+  distributed-log-logstash-log:
+  distributed-log-kibana:
+  apm-prometheus:
+  apm-grafana:
 
 networks:
   twitter_network:
