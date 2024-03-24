@@ -46,5 +46,8 @@ https://docs.google.com/document/d/1bsO0e2wWFvw-jAbuc9BGonfC_15wZYgqUg7GeniQrOo/
 
     b. execute every query in twitter.sql
 
-4. If you want to stop & remove containers & networks, run this command:
-    ```docker-compose down```
+4. If you want to run the docker compose, run this command:
+    ```make run-app```
+
+5. If you want to stop the docker compose, run this command:
+    ```make stop-app```
