@@ -4,3 +4,6 @@ run-app:
 
 stop-app:
 	docker compose down
+
+run-debug-app:
+	docker compose build && docker compose up -d
