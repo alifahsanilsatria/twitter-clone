@@ -6,4 +6,7 @@ stop-app:
 	docker compose down
 
 run-debug-app:
-	docker compose build && docker compose up -d
+	cd debugmode; docker compose build && docker compose up -d
+
+stop-debug-app:
+	cd debugmode; docker compose down

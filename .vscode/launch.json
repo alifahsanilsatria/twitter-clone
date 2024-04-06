@@ -11,7 +11,7 @@
             "mode": "debug",
             "host": "localhost",
             "program": "${workspaceRoot}/cmd/twitter-clone-http",
-            "envFile": "${workspaceRoot}/debug.env",
+            "envFile": "${workspaceRoot}/debugmode/.env",
             "args": [],
             "showLog": true,
             "preLaunchTask": "pre_debug_launch"
