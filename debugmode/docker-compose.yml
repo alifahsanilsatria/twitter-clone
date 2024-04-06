@@ -1,0 +1,166 @@
+services:
+  postgresql:
+    image: postgres:14.10
+    container_name: postgresql
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    volumes:
+      - /var/lib/docker/volumes/twitter-clone_pgdata/_data:/var/lib/postgresql/data
+    healthcheck:  
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    env_file:
+      - .env
+
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - ${REDIS_PORT}:${REDIS_PORT}
+    volumes:
+      - /var/lib/docker/volumes/twitter-clone_redisdata/_data:/var/lib/redis/data
+    command: /bin/sh -c "redis-server --requirepass ${REDIS_PASS}"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 2s
+      retries: 10 
+    restart: unless-stopped
+    env_file:
+      - .env
+
+  zipkin-collector:
+    image: openzipkin/zipkin-slim:3
+    container_name: zipkin-collector
+    environment:
+      - STORAGE_TYPE=elasticsearch
+      # Point the zipkin at the storage backend
+      - ES_HOSTS=${ZIPKIN_ES_HOSTS}
+      # Uncomment to see requests to and from elasticsearch
+      - ES_HTTP_LOGGING=BODY
+       # Uncomment to increase heap size
+      - JAVA_OPTS=-Xms1024m -Xmx1024m -XX:+ExitOnOutOfMemoryError
+    ports:
+      - "${ZIPKIN_COLLECTOR_PORT}:${ZIPKIN_COLLECTOR_PORT}"
+    depends_on:
+      zipkin-elasticsearch:
+        condition: service_healthy
+    env_file:
+      - .env
+
+  zipkin-elasticsearch:
+    image: ghcr.io/openzipkin/zipkin-elasticsearch8:3.1.1
+    container_name: zipkin-elasticsearch
+    volumes:
+      - /var/lib/docker/volumes/twitter-clone_distributed-tracing-elastic-data/_data:/elasticsearch
+    ports:
+      - ${ZIPKIN_ES_PORT_EXTERNAL}:${ZIPKIN_ES_PORT_INTERNAL}
+    env_file:
+      - .env
+
+  logstash-elasticsearch:
+    image: elasticsearch:7.17.18
+    container_name: elasticsearch
+    restart: always
+    volumes:
+      - /var/lib/docker/volumes/twitter-clone_distributed-log-elastic-data/_data:/usr/share/elasticsearch/data/
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      discovery.type: single-node
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'Hello from elastic' || exit 1"]
+      interval: 1s
+      timeout: 2s
+      retries: 10 
+    ports:
+      - ${LOGSTASH_ES_PORT_EXTERNAL}:${LOGSTASH_ES_PORT_INTERNAL}
+    env_file:
+      - .env
+
+  logstash:
+    image: logstash:7.16.2
+    container_name: logstash
+    restart: always
+    volumes:
+      - /var/lib/docker/volumes/twitter-clone_distributed-log-logstash-conf/_data:/logstash
+      - /var/lib/docker/volumes/twitter-clone_distributed-log-logstash-log/_data:/var/log
+    command: logstash -f /logstash/logstash.conf
+    depends_on:
+      logstash-elasticsearch:
+        condition: service_healthy
+    ports:
+      - ${LOGSTASH_PORT}:${LOGSTASH_PORT}
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m" 
+    env_file:
+      - .env
+
+  kibana:
+    image: kibana:7.16.2
+    container_name: kibana
+    restart: always
+    volumes:
+      - /var/lib/docker/volumes/twitter-clone_distributed-log-kibana/_data:/usr/share/kibana
+    ports:
+      - ${KIBANA_PORT}:${KIBANA_PORT}
+    environment:
+      - ELASTICSEARCH_URL=${LOGSTASH_ES_HOST}
+    depends_on:
+      logstash-elasticsearch:
+        condition: service_healthy
+    env_file:
+      - .env
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: prometheus
+    ports:
+      - ${PROMETHEUS_PORT}:${PROMETHEUS_PORT}
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - /var/lib/docker/volumes/twitter-clone_apm-prometheus/_data:/etc/prometheus:ro
+    depends_on:
+      - cadvisor
+    env_file:
+      - .env
+  
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    ports:
+      - ${CADVISOR_PORT}:${CADVISOR_PORT}
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+
+  grafana:
+    image: grafana/grafana-enterprise:10.3.5
+    container_name: grafana
+    restart: unless-stopped
+    # if you are running as root then set it to 0
+    # else find the right id with the id -u command
+    user: '0'
+    ports:
+      - ${GRAFANA_PORT}:${GRAFANA_PORT}
+    # adding the mount volume point which we create earlier
+    volumes:
+      - /var/lib/docker/volumes/twitter-clone_apm-grafana/_data:/var/lib/grafana
+    env_file:
+      - .env
