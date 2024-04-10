@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo"
 
+	"github.com/alifahsanilsatria/twitter-clone/common"
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/trace"
@@ -18,6 +19,10 @@ func (handler *userHandler) SignIn(echoCtx echo.Context) error {
 	ctx, span := handler.tracer.Start(context.Background(), "handler.SignIn",
 		trace.WithSpanKind(trace.SpanKindServer),
 	)
+
+	var pushToPrometheusMetricsParam = common.PushMetricsToPrometheusParam{
+		Path: echoCtx.Request().Header.Get("Url-Path"),
+	}
 
 	requestId := echoCtx.Request().Header.Get("Request-Id")
 
@@ -37,6 +42,7 @@ func (handler *userHandler) SignIn(echoCtx echo.Context) error {
 			WithError(errParsingReqPayload).
 			Errorln("error when parsing request payload")
 		span.End()
+		common.PushMetricsToPrometheus(pushToPrometheusMetricsParam)
 		return echoCtx.JSON(http.StatusUnprocessableEntity, errParsingReqPayload.Error())
 	}
 
@@ -50,6 +56,7 @@ func (handler *userHandler) SignIn(echoCtx echo.Context) error {
 			WithError(errvalidateSignInParam).
 			Errorln("error when validate sign in param")
 		span.End()
+		common.PushMetricsToPrometheus(pushToPrometheusMetricsParam)
 		return echoCtx.JSON(http.StatusBadRequest, errvalidateSignInParam.Error())
 	}
 
@@ -68,6 +75,7 @@ func (handler *userHandler) SignIn(echoCtx echo.Context) error {
 			WithError(errorSignInUsecase).
 			Errorln("error when sign in")
 		span.End()
+		common.PushMetricsToPrometheus(pushToPrometheusMetricsParam)
 		return echoCtx.JSON(http.StatusInternalServerError, errorSignInUsecase.Error())
 	}
 
@@ -76,6 +84,8 @@ func (handler *userHandler) SignIn(echoCtx echo.Context) error {
 		WithFields(logData).
 		Infoln("success sign in")
 	span.End()
+	pushToPrometheusMetricsParam.IsRequestSuccessful = true
+	common.PushMetricsToPrometheus(pushToPrometheusMetricsParam)
 
 	return echoCtx.JSON(http.StatusOK, signInUsecaseResult)
 }
