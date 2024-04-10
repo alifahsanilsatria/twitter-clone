@@ -16,6 +16,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/alifahsanilsatria/twitter-clone/common"
 	tweetHandler "github.com/alifahsanilsatria/twitter-clone/tweet/delivery/http"
@@ -27,6 +28,7 @@ import (
 	userUsecase "github.com/alifahsanilsatria/twitter-clone/user/usecase"
 	userSessionRedisRepository "github.com/alifahsanilsatria/twitter-clone/user_session/repository/redis"
 	_ "github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,6 +37,10 @@ func init() {
 	if debugMode {
 		log.Println("Service RUN on DEBUG mode")
 	}
+
+	prometheus.Register(common.GetTotalRequestPrometheus())
+	prometheus.Register(common.GetTotalSuccessfulRequestPrometheus())
+	prometheus.Register(common.GetTotalFailedRequestPrometheus())
 }
 
 func main() {
@@ -79,7 +85,7 @@ func main() {
 	e := echo.New()
 
 	userMiddleWare := userMiddleware.InitMiddleware()
-	e.Use(userMiddleWare.RequestId)
+	e.Use(userMiddleWare.ExtraHeader)
 
 	trace := tracerProvider.Tracer("twitter-clone")
 
@@ -92,6 +98,8 @@ func main() {
 	tweetRepository := tweetDBRepository.NewTweetRepository(sqlConn, sqlTxConn, logger, trace)
 	tweetUsecase := tweetUsecase.NewTweetUsecase(tweetRepository, userSessionRepository, logger, trace)
 	tweetHandler.NewTweetHandler(e, tweetUsecase, logger, trace)
+
+	e.GET("/prometheus/metrics", echo.WrapHandler(promhttp.Handler()))
 
 	serviceAddress := common.GetString("TWITTER_CLONE_ADDRESS", "")
 

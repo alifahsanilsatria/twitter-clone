@@ -10,11 +10,15 @@ type GoMiddleware struct {
 	// another stuff , may be needed by middleware
 }
 
-// RequestId will handle the RequestId middleware
-func (m *GoMiddleware) RequestId(next echo.HandlerFunc) echo.HandlerFunc {
+// ExtraHeader will handle the ExtraHeader middleware
+func (m *GoMiddleware) ExtraHeader(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		requestId, _ := uuid.NewRandom()
+		urlPath := ctx.Request().URL.Path
+
 		ctx.Request().Header.Set("Request-Id", requestId.String())
+		ctx.Request().Header.Set("Url-Path", urlPath)
+
 		return next(ctx)
 	}
 }
