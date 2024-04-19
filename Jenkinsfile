@@ -1,6 +1,6 @@
 pipeline{
     agent{
-        docker {
+        any {
             image 'docker:26.0.1-dind-alpine3.19'
         }
     }
