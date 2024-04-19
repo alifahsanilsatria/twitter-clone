@@ -13,7 +13,9 @@ pipeline{
     }
     post{
         always{
-            echo "echo 'Hello World (always)'"
+            steps {
+                sh "echo 'Hello World (always)'"
+            }
         }
     }
 }
