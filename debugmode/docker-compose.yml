@@ -7,7 +7,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASS}
       - POSTGRES_DB=${DB_NAME}
     ports:
-      - ${DB_PORT}:${DB_PORT}
+      - ${DB_HOST_PORT}:5432
     volumes:
       - /var/lib/docker/volumes/twitter-clone_pgdata/_data:/var/lib/postgresql/data
     healthcheck:  
@@ -23,7 +23,7 @@ services:
     image: redis:7.2
     container_name: redis
     ports:
-      - ${REDIS_PORT}:${REDIS_PORT}
+      - ${REDIS_HOST_PORT}:6379
     volumes:
       - /var/lib/docker/volumes/twitter-clone_redisdata/_data:/var/lib/redis/data
     command: /bin/sh -c "redis-server --requirepass ${REDIS_PASS}"
@@ -48,7 +48,7 @@ services:
        # Uncomment to increase heap size
       - JAVA_OPTS=-Xms1024m -Xmx1024m -XX:+ExitOnOutOfMemoryError
     ports:
-      - "${ZIPKIN_COLLECTOR_PORT}:${ZIPKIN_COLLECTOR_PORT}"
+      - "${ZIPKIN_COLLECTOR_HOST_PORT}:9411"
     depends_on:
       zipkin-elasticsearch:
         condition: service_healthy
@@ -61,7 +61,7 @@ services:
     volumes:
       - /var/lib/docker/volumes/twitter-clone_distributed-tracing-elastic-data/_data:/elasticsearch
     ports:
-      - ${ZIPKIN_ES_PORT_EXTERNAL}:${ZIPKIN_ES_PORT_INTERNAL}
+      - ${ZIPKIN_ES_HOST_PORT}:9200
     env_file:
       - .env
 
@@ -80,7 +80,7 @@ services:
       timeout: 2s
       retries: 10 
     ports:
-      - ${LOGSTASH_ES_PORT_EXTERNAL}:${LOGSTASH_ES_PORT_INTERNAL}
+      - ${LOGSTASH_ES_HOST_PORT}:9200
     env_file:
       - .env
 
@@ -96,7 +96,7 @@ services:
       logstash-elasticsearch:
         condition: service_healthy
     ports:
-      - ${LOGSTASH_PORT}:${LOGSTASH_PORT}
+      - ${LOGSTASH_HOST_PORT}:9600
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m" 
     env_file:
@@ -109,7 +109,7 @@ services:
     volumes:
       - /var/lib/docker/volumes/twitter-clone_distributed-log-kibana/_data:/usr/share/kibana
     ports:
-      - ${KIBANA_PORT}:${KIBANA_PORT}
+      - ${KIBANA_HOST_PORT}:5601
     environment:
       - ELASTICSEARCH_URL=${LOGSTASH_ES_HOST}
     depends_on:
@@ -122,7 +122,7 @@ services:
     image: prom/prometheus:v2.51.0
     container_name: prometheus
     ports:
-      - ${PROMETHEUS_PORT}:${PROMETHEUS_PORT}
+      - ${PROMETHEUS_HOST_PORT}:9100
     command:
       - --config.file=/etc/prometheus/prometheus.yml
     volumes:
@@ -136,7 +136,7 @@ services:
     image: gcr.io/cadvisor/cadvisor:v0.49.1
     container_name: cadvisor
     ports:
-      - ${CADVISOR_PORT}:${CADVISOR_PORT}
+      - ${CADVISOR_HOST_PORT}:8080
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
@@ -158,7 +158,7 @@ services:
     # else find the right id with the id -u command
     user: '0'
     ports:
-      - ${GRAFANA_PORT}:${GRAFANA_PORT}
+      - ${GRAFANA_HOST_PORT}:3000
     # adding the mount volume point which we create earlier
     volumes:
       - /var/lib/docker/volumes/twitter-clone_apm-grafana/_data:/var/lib/grafana

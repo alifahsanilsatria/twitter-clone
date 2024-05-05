@@ -31,3 +31,5 @@ USER nonroot
 
 # Command to run the executable
 CMD ["/myapp"]
+
+EXPOSE 9090
