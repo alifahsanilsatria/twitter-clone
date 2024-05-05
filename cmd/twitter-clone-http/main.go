@@ -101,10 +101,8 @@ func main() {
 
 	e.GET("/prometheus/metrics", echo.WrapHandler(promhttp.Handler()))
 
-	serviceAddress := common.GetString("TWITTER_CLONE_ADDRESS", "")
-
 	serverListener := http.Server{
-		Addr:    serviceAddress,
+		Addr:    ":9090",
 		Handler: e,
 	}
 
@@ -118,7 +116,7 @@ func main() {
 
 func createSQLConnectionInstance() (*sql.DB, error) {
 	dbHost := common.GetString("DB_HOST", "")
-	dbPort := common.GetInt32("DB_PORT", 0)
+	dbPort := common.GetInt32("DB_HOST_PORT", 0)
 	dbUser := common.GetString("DB_USER", "")
 	dbPass := common.GetString("DB_PASS", "")
 	dbName := common.GetString("DB_NAME", "")
@@ -132,7 +130,7 @@ func createSQLConnectionInstance() (*sql.DB, error) {
 
 func createRedisConnectionInstance() *redis.Client {
 	redisHost := common.GetString("REDIS_HOST", "")
-	redisPort := common.GetInt32("REDIS_PORT", 0)
+	redisPort := common.GetInt32("REDIS_HOST_PORT", 0)
 	redisAddr := fmt.Sprintf("%s:%d", redisHost, redisPort)
 	redisPassword := common.GetString("REDIS_PASS", "")
 	redisDBNumber := common.GetInt32("REDIS_DB_NUMBER", 0)
