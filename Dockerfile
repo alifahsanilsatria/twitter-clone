@@ -27,6 +27,10 @@ COPY --from=build-base /etc/passwd /etc/passwd
 
 COPY --from=build-base --chown=nonroot:nonroot /app/myapp /
 
+COPY --from=build-base --chown=nonroot:nonroot /app/twitter-clone.crt /
+
+COPY --from=build-base --chown=nonroot:nonroot /app/twitter-clone.key /
+
 USER nonroot
 
 # Command to run the executable

@@ -108,7 +108,9 @@ func main() {
 
 	log.Printf("service is listening at port %s", serverListener.Addr)
 
-	if err := serverListener.ListenAndServe(); err != http.ErrServerClosed {
+	twitterCloneServerCrt := common.GetString("TWITTER_CLONE_SERVER_CRT", "")
+	twitterCloneServerPK := common.GetString("TWITTER_CLONE_SERVER_PK", "")
+	if err := serverListener.ListenAndServeTLS(twitterCloneServerCrt, twitterCloneServerPK); err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
 
