@@ -97,6 +97,43 @@ type SeeTweetDetailsUsecaseResult_TweetDetails struct {
 	IsChildTweet   bool
 }
 
+type GetListOfUserTimelineTweetsParam struct {
+	Token string
+}
+
+type GetListOfUserTimelineTweetsResult struct {
+	Tweets []GetListOfUserTimelineTweetsResult_TweetDetails
+}
+
+type GetListOfUserTimelineTweetsResult_TweetDetails struct {
+	TweetId      int32
+	Username     string
+	CompleteName string
+	Content      string
+	CountRetweet int32
+	CountLikes   int32
+	CountReplies int32
+}
+
+type GetListOfAUserTimelineTweetsParam struct {
+	Token    string
+	Username string
+}
+
+type GetListOfAUserTimelineTweetsResult struct {
+	Tweets []GetListOfAUserTimelineTweetsResult_TweetDetails
+}
+
+type GetListOfAUserTimelineTweetsResult_TweetDetails struct {
+	TweetId      int32
+	Username     string
+	CompleteName string
+	Content      string
+	CountRetweet int32
+	CountLikes   int32
+	CountReplies int32
+}
+
 type TweetUsecase interface {
 	PublishTweet(ctx context.Context, param PublishTweetUsecaseParam) (PublishTweetUsecaseResult, error)
 	DeleteTweet(ctx context.Context, param DeleteTweetUsecaseParam) (DeleteTweetUsecaseResult, error)
@@ -105,6 +142,8 @@ type TweetUsecase interface {
 	LikeTweet(ctx context.Context, param LikeTweetUsecaseParam) (LikeTweetUsecaseResult, error)
 	UndoLikes(ctx context.Context, param UndoLikesUsecaseParam) (UndoLikesUsecaseResult, error)
 	SeeTweetDetails(ctx context.Context, param SeeTweetDetailsUsecaseParam) (SeeTweetDetailsUsecaseResult, error)
+	GetListOfUserTimelineTweets(ctx context.Context, param GetListOfUserTimelineTweetsParam) (GetListOfUserTimelineTweetsResult, error)
+	GetListOfAUserTimelineTweets(ctx context.Context, param GetListOfAUserTimelineTweetsParam) (GetListOfAUserTimelineTweetsResult, error)
 }
 
 type CreateNewTweetParam struct {
@@ -212,6 +251,42 @@ type GetTweetByIdResult struct {
 	CountReplies int32
 }
 
+type GetListOfUserFollowingTweetsParam struct {
+	UserId int32
+}
+
+type GetListOfUserFollowingTweetsResult struct {
+	Tweets []GetListOfUserFollowingTweetsResult_Tweet
+}
+
+type GetListOfUserFollowingTweetsResult_Tweet struct {
+	TweetId      int32
+	Username     string
+	CompleteName string
+	Content      string
+	CountRetweet int32
+	CountLikes   int32
+	CountReplies int32
+}
+
+type GetListOfAUserTweetsParam struct {
+	UserId int32
+}
+
+type GetListOfAUserTweetsResult struct {
+	Tweets []GetListOfAUserTweetsResult_Tweet
+}
+
+type GetListOfAUserTweetsResult_Tweet struct {
+	TweetId      int32
+	Username     string
+	CompleteName string
+	Content      string
+	CountRetweet int32
+	CountLikes   int32
+	CountReplies int32
+}
+
 type TweetRepository interface {
 	CreateNewTweet(ctx context.Context, param CreateNewTweetParam) (CreateNewTweetResult, error)
 	GetTweetByIdAndUserId(ctx context.Context, param GetTweetByIdAndUserIdParam) (GetTweetByIdAndUserIdResult, error)
@@ -223,4 +298,6 @@ type TweetRepository interface {
 	GetChildrenDataByTweetId(ctx context.Context, param GetChildrenDataByTweetIdParam) (GetChildrenDataByTweetIdResult, error)
 	GetParentsDataByTweetId(ctx context.Context, param GetParentsDataByTweetIdParam) (GetParentsDataByTweetIdResult, error)
 	GetTweetById(ctx context.Context, param GetTweetByIdParam) (GetTweetByIdResult, error)
+	GetListOfUserFollowingTweets(ctx context.Context, param GetListOfUserFollowingTweetsParam) (GetListOfUserFollowingTweetsResult, error)
+	GetListOfAUserTweets(ctx context.Context, param GetListOfAUserTweetsParam) (GetListOfAUserTweetsResult, error)
 }

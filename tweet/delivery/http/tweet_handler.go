@@ -32,4 +32,6 @@ func NewTweetHandler(
 	e.POST("/likes", handler.LikeTweet)
 	e.DELETE("/likes", handler.UndoLikes)
 	e.GET("/tweet/:tweet_id", handler.SeeTweetDetails)
+	e.GET("/home", handler.GetListOfUserTimelineTweets)
+	e.GET("/:user_name", handler.GetListOfAUserTimelineTweets)
 }

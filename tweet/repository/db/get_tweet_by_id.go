@@ -46,7 +46,7 @@ func (repo *tweetRepository) GetTweetById(ctx context.Context, param domain.GetT
 		where tmct.is_deleted = false
 		group by tmct.tweet_id
 		) tmct on t.id = tmct.tweet_id
-		where t.id = $1 AND t.is_deleted = false;
+		where t.id = $1 AND t.is_deleted = false and u.is_deleted = false;
 	`
 
 	args := []interface{}{

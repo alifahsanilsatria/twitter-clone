@@ -8,6 +8,7 @@ import (
 
 type tweetUsecase struct {
 	tweetRepository       domain.TweetRepository
+	userRepository        domain.UserRepository
 	userSessionRepository domain.UserSessionRepository
 	logger                *logrus.Logger
 	tracer                trace.Tracer
@@ -15,12 +16,14 @@ type tweetUsecase struct {
 
 func NewTweetUsecase(
 	tweetRepository domain.TweetRepository,
+	userRepository domain.UserRepository,
 	userSessionRepository domain.UserSessionRepository,
 	logger *logrus.Logger,
 	tracer trace.Tracer,
 ) domain.TweetUsecase {
 	return &tweetUsecase{
 		tweetRepository:       tweetRepository,
+		userRepository:        userRepository,
 		userSessionRepository: userSessionRepository,
 		logger:                logger,
 		tracer:                tracer,

@@ -7,9 +7,15 @@ import (
 
 	"github.com/alifahsanilsatria/twitter-clone/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (uc *tweetUsecase) SeeTweetDetails(ctx context.Context, param domain.SeeTweetDetailsUsecaseParam) (domain.SeeTweetDetailsUsecaseResult, error) {
+	ctx, span := uc.tracer.Start(ctx, "usecase.GetListOfUserTimelineTweets", trace.WithAttributes(
+		attribute.String("param", fmt.Sprintf("%+v", param)),
+	))
+
 	logData := logrus.Fields{
 		"method":     "tweetUsecase.SeeTweetDetails",
 		"request_id": ctx.Value("request_id"),
@@ -29,12 +35,14 @@ func (uc *tweetUsecase) SeeTweetDetails(ctx context.Context, param domain.SeeTwe
 			WithFields(logData).
 			WithError(errGetUserSession).
 			Errorln("error on GetUserSessionByToken")
+		span.End()
 		return domain.SeeTweetDetailsUsecaseResult{}, errGetUserSession
 	}
 
 	logData["get_user_session_by_token_result"] = fmt.Sprintf("%+v", userSession)
 
 	if userSession.UserId == 0 {
+		span.End()
 		return domain.SeeTweetDetailsUsecaseResult{}, errors.New("invalid or expired token")
 	}
 
@@ -48,10 +56,12 @@ func (uc *tweetUsecase) SeeTweetDetails(ctx context.Context, param domain.SeeTwe
 			WithFields(logData).
 			WithError(errGetTweetById).
 			Errorln("error on GetTweetById")
+		span.End()
 		return domain.SeeTweetDetailsUsecaseResult{}, errGetTweetById
 	}
 
 	if getTweetByIdResult.TweetId == 0 {
+		span.End()
 		return domain.SeeTweetDetailsUsecaseResult{}, errors.New("the tweet doesn't exist or deleted")
 	}
 
@@ -65,6 +75,7 @@ func (uc *tweetUsecase) SeeTweetDetails(ctx context.Context, param domain.SeeTwe
 			WithFields(logData).
 			WithError(errGetParentsDataByTweetId).
 			Errorln("error on GetParentsDataByTweetId")
+		span.End()
 		return domain.SeeTweetDetailsUsecaseResult{}, errGetParentsDataByTweetId
 	}
 
@@ -78,6 +89,7 @@ func (uc *tweetUsecase) SeeTweetDetails(ctx context.Context, param domain.SeeTwe
 			WithFields(logData).
 			WithError(errGetChildrenDataByTweetId).
 			Errorln("error on GetChildrenDataByTweetId")
+		span.End()
 		return domain.SeeTweetDetailsUsecaseResult{}, errGetChildrenDataByTweetId
 	}
 
@@ -122,6 +134,8 @@ func (uc *tweetUsecase) SeeTweetDetails(ctx context.Context, param domain.SeeTwe
 		}
 		seeTweetDetailsUsecaseResult.TweetDetails = append(seeTweetDetailsUsecaseResult.TweetDetails, tweetDetails)
 	}
+
+	span.End()
 
 	return seeTweetDetailsUsecaseResult, nil
 }

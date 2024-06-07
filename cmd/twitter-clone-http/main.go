@@ -96,7 +96,7 @@ func main() {
 	userHandler.NewUserHandler(e, userUsecase, logger, trace)
 
 	tweetRepository := tweetDBRepository.NewTweetRepository(sqlConn, sqlTxConn, logger, trace)
-	tweetUsecase := tweetUsecase.NewTweetUsecase(tweetRepository, userSessionRepository, logger, trace)
+	tweetUsecase := tweetUsecase.NewTweetUsecase(tweetRepository, userRepository, userSessionRepository, logger, trace)
 	tweetHandler.NewTweetHandler(e, tweetUsecase, logger, trace)
 
 	e.GET("/prometheus/metrics", echo.WrapHandler(promhttp.Handler()))
