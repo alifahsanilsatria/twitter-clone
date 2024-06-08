@@ -121,7 +121,7 @@ services:
     restart: always
     volumes:
       - distributed-log-logstash-conf:/logstash
-      - distributed-log-logstash-log:/var/log
+      - /var/log/api-golang.log:/var/log/api-golang.log
     command: logstash -f /logstash/logstash.conf
     depends_on:
       logstash-elasticsearch:
