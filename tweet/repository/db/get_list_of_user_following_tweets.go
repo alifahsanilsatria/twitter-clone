@@ -63,7 +63,7 @@ func (repo *tweetRepository) GetListOfUserFollowingTweets(ctx context.Context, p
 
 	result := domain.GetListOfUserFollowingTweetsResult{}
 
-	for queryContextResp.NextResultSet() {
+	for queryContextResp.Next() {
 		tweet := domain.GetListOfUserFollowingTweetsResult_Tweet{}
 		errScan := queryContextResp.Scan(
 			&tweet.TweetId,
