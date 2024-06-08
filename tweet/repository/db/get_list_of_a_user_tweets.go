@@ -60,7 +60,7 @@ func (repo *tweetRepository) GetListOfAUserTweets(ctx context.Context, param dom
 
 	result := domain.GetListOfAUserTweetsResult{}
 
-	for queryContextResp.NextResultSet() {
+	for queryContextResp.Next() {
 		tweet := domain.GetListOfAUserTweetsResult_Tweet{}
 		errScan := queryContextResp.Scan(
 			&tweet.TweetId,
