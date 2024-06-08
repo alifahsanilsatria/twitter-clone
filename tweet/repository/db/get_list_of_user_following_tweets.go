@@ -47,7 +47,11 @@ func (repo *tweetRepository) GetListOfUserFollowingTweets(ctx context.Context, p
 		where tmct.is_deleted = false
 		group by tmct.tweet_id
 		) tmct on t.id = tmct.tweet_id
-		where t.is_deleted = false 
+		where t.id not in (
+			select tmct_exlude_child.child_tweet_id 
+			from tweet_map_child_tweet tmct_exlude_child
+		)
+		and t.is_deleted = false 
 		and u.is_deleted = false 
 		and uf.is_deleted = false
 	`
